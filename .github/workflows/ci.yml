@@ -1,0 +1,33 @@
+name: CI Sprint 0
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  build-and-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Configurar cache do Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Dar permissão de execução ao gradlew
+        run: chmod +x gradlew
+
+      - name: Verificar estilo e qualidade (ktlint e detekt)
+        run: ./gradlew ktlintCheck detekt
+
+      - name: Compilar o app (Android)
+        run: ./gradlew assembleDebug
