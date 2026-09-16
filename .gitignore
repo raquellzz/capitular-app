@@ -1,8 +1,10 @@
 *.iml
 .kotlin
 .gradle
+.gradle-user-home/
+.android/
+.run/
 **/build/
-xcuserdata
 !src/**/build/
 local.properties
 .idea
@@ -10,10 +12,4 @@ local.properties
 captures
 .externalNativeBuild
 .cxx
-*.xcodeproj/*
-!*.xcodeproj/project.pbxproj
-!*.xcodeproj/xcshareddata/
-!*.xcodeproj/project.xcworkspace/
-!*.xcworkspace/contents.xcworkspacedata
-**/xcshareddata/WorkspaceSettings.xcsettings
 node_modules/

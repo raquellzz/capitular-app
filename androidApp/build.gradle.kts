@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.composeCompiler)
+    alias(libs.plugins.kotlinSerialization)
 }
 
 kotlin {
@@ -11,12 +12,24 @@ kotlin {
     }
 }
 dependencies {
-    implementation(project(":shared"))
-
     implementation(libs.androidx.activity.compose)
-
+    implementation(libs.compose.runtime)
+    implementation(libs.compose.foundation)
+    implementation(libs.compose.material3)
+    implementation(libs.compose.ui)
     implementation(libs.compose.uiToolingPreview)
+    implementation(libs.androidx.lifecycle.viewmodelCompose)
+    implementation(libs.androidx.lifecycle.runtimeCompose)
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.ktor.client.core)
+    implementation(libs.ktor.client.contentNegotiation)
+    implementation(libs.ktor.serialization.kotlinxJson)
+    implementation(libs.ktor.client.okhttp)
+
     debugImplementation(libs.compose.uiTooling)
+
+    testImplementation(libs.kotlin.testJunit)
+    testImplementation(libs.junit)
 }
 
 android {

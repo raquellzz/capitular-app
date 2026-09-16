@@ -1,5 +1,17 @@
 # Proposta
 
+## Equipe
+- Pablo Deyvid de Paiva
+  - 20260001713
+  - Desenvolvedor Fullstack
+- Raquel da Costa Freire
+  - 20260073006
+  - Desenvolvedor Fullstack
+
+## [Board de tarefas](https://github.com/users/raquellzz/projects/1)
+
+## [Vídeo de apresentação do MVP](https://drive.google.com/file/d/17V080nPkhYQYCTstLCTz57ZcQpRpJW-A/view?usp=sharing)
+
 ## Visão de Produto
 
 **Para** leitores casuais e estudantes \
@@ -16,13 +28,14 @@
 Acreditamos que leitores casuais vão registrar suas leituras diariamente porque a gamificação em formato de ranking e a comprovação por foto criam um senso de responsabilidade mútua e pertencimento ao grupo.  
 
 ### O que entra no MVP
+- Cadastro e login de usuários com autenticação via e-mail e senha.
 - Cadastro de check-in diário com intervalo de páginas lidas e captura de foto pelo aplicativo.
 - Tela de feed exibindo os check-ins recentes dos membros do grupo de leitura.
 - Placar de classificação (ranking) semanal baseado no volume de páginas lidas.
 - Funcionamento offline com fila local de check-ins e sincronização automática ao recuperar conexão.  
+- Sistema de chat, comentários ou mensagens diretas entre os usuários.
 
 ### O que fica fora do MVP
-- Sistema de chat, comentários ou mensagens diretas entre os usuários.
 - Reconhecimento óptico de caracteres (OCR) para validar o texto na foto da página.
 - Integração com APIs externas (como Google Books) para buscar capas, autores e sinopses.
 - Sistema complexo de conquistas, perfis detalhados e medalhas virtuais.

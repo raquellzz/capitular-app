@@ -1,35 +1,36 @@
-This is a Kotlin Multiplatform project targeting Android, iOS, Desktop (JVM).
+# Capitular Android
 
-* [/iosApp](./iosApp/iosApp) contains an iOS application. Even if you’re sharing your UI with Compose Multiplatform,
-  you need this entry point for your iOS app. This is also where you should add SwiftUI code for your project.
+Aplicativo Android de leitura social desenvolvido com Kotlin e Jetpack Compose.
 
-* [/shared](./shared/src) is for code that will be shared across your Compose Multiplatform applications.
-  It contains several subfolders:
-  - [commonMain](./shared/src/commonMain/kotlin) is for code that’s common for all targets.
-  - Other folders are for Kotlin code that will be compiled for only the platform indicated in the folder name.
-    For example, if you want to use Apple’s CoreCrypto for the iOS part of your Kotlin app,
-    the [iosMain](./shared/src/iosMain/kotlin) folder would be the right place for such calls.
-    Similarly, if you want to edit the Desktop (JVM) specific part, the [jvmMain](./shared/src/jvmMain/kotlin)
-    folder is the appropriate location.
+## Estrutura
 
-### Running the apps
+- `androidApp/src/main/kotlin`: aplicação, telas, autenticação e integração com a API.
+- `androidApp/src/main/res`: manifestos e recursos Android.
+- `androidApp/src/test`: testes unitários locais.
+- `docs`: documentação do produto.
 
-Use the run configurations provided by the run widget in your IDE's toolbar. You can also use these commands and options:
+O projeto é Android-only. Não possui targets, source sets ou módulos de iOS e desktop.
 
-- Android app: `./gradlew :androidApp:assembleDebug`
-- Desktop app:
-  - Hot reload: `./gradlew :desktopApp:hotRun --auto`
-  - Standard run: `./gradlew :desktopApp:run`
-- iOS app: open the [/iosApp](./iosApp) directory in Xcode and run it from there.
+## Executar tudo
 
-### Running tests
+O script abaixo sobe a API e o PostgreSQL com Docker, cria um AVD exclusivo dentro
+do projeto, abre o emulador, instala o APK e inicia o aplicativo:
 
-Use the run button in your IDE's editor gutter, or run tests using Gradle tasks:
+```shell
+./run-android.sh
+```
 
-- Android tests: `./gradlew :shared:testAndroidHostTest`
-- Desktop tests: `./gradlew :shared:jvmTest`
-- iOS tests: `./gradlew :shared:iosSimulatorArm64Test`
+Para começar com o estado limpo do emulador:
 
----
+```shell
+./run-android.sh --clean
+```
 
-Learn more about [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html)…
+Use `./run-android.sh --help` para escolher outro SDK, AVD, porta ou iniciar sem o backend.
+O AVD, os caches Gradle e os logs ficam isolados em `.android`, `.gradle-user-home` e `.run`.
+
+## Testes
+
+```shell
+./gradlew :androidApp:testDebugUnitTest
+```

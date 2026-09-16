@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="capitular_splash_background">#FAF8FF</color>
+    <color name="capitular_icon_background">#EDE7FF</color>
+    <color name="capitular_navigation_bar">#FAF8FF</color>
+</resources>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Capitular" parent="Theme.Capitular.Base">
+        <item name="android:windowSplashScreenBackground">@color/capitular_splash_background</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/capitular_logo</item>
+        <item name="android:windowSplashScreenIconBackgroundColor">@color/capitular_icon_background</item>
+        <item name="android:windowSplashScreenAnimationDuration">350</item>
+    </style>
+</resources>
