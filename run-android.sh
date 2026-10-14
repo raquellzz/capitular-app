@@ -6,7 +6,7 @@ readonly SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 readonly PROJECT_ROOT="$SCRIPT_DIR"
 readonly BACKEND_ROOT="$(cd -- "$PROJECT_ROOT/../capitular-backend" 2>/dev/null && pwd || true)"
 
-AVD_NAME="capitular_isolated_api36"
+AVD_NAME="capitular_isolated_api34"
 EMULATOR_PORT="5556"
 PORT_EXPLICIT=false
 SDK_OVERRIDE=""
@@ -194,8 +194,8 @@ case "$(uname -m)" in
         ;;
 esac
 
-readonly SYSTEM_IMAGE="system-images;android-36;google_apis;${SYSTEM_IMAGE_ABI}"
-readonly SYSTEM_IMAGE_DIR="$SDK_ROOT/system-images/android-36/google_apis/$SYSTEM_IMAGE_ABI"
+readonly SYSTEM_IMAGE="system-images;android-34;google_apis;${SYSTEM_IMAGE_ABI}"
+readonly SYSTEM_IMAGE_DIR="$SDK_ROOT/system-images/android-34/google_apis/$SYSTEM_IMAGE_ABI"
 
 avd_is_configured() {
     [[ -f "$ANDROID_AVD_HOME/$AVD_NAME.ini" || -d "$ANDROID_AVD_HOME/$AVD_NAME.avd" ]]
@@ -206,8 +206,8 @@ install_missing_sdk_packages() {
 
     [[ -x "$ADB_BIN" ]] || packages+=("platform-tools")
     [[ -x "$EMULATOR_BIN" ]] || packages+=("emulator")
-    [[ -d "$SDK_ROOT/platforms/android-36" ]] || packages+=("platforms;android-36")
-    [[ -d "$SDK_ROOT/build-tools/36.0.0" ]] || packages+=("build-tools;36.0.0")
+    [[ -d "$SDK_ROOT/platforms/android-34" ]] || packages+=("platforms;android-34")
+    [[ -d "$SDK_ROOT/build-tools/34.0.0" ]] || packages+=("build-tools;34.0.0")
     # Um AVD existente pode usar outra variante da imagem (por exemplo,
     # "default"). Só precisamos baixar a imagem escolhida quando for criar
     # um AVD novo.
@@ -388,7 +388,8 @@ start_emulator() {
         -no-audio
         -no-metrics
         -camera-back virtualscene
-        -gpu auto
+        -gpu off
+        -no-window
     )
 
     if command -v launchctl >/dev/null 2>&1 && launchctl print "$launchd_domain" >/dev/null 2>&1; then
