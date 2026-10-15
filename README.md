@@ -11,6 +11,13 @@ Aplicativo Android de leitura social desenvolvido com Kotlin e Jetpack Compose.
 
 O projeto é Android-only. Não possui targets, source sets ou módulos de iOS e desktop.
 
+## Acessibilidade (T8)
+
+O projeto segue as diretrizes de acessibilidade do Jetpack Compose para leitores de tela (TalkBack / VoiceOver):
+- **Semântica de Cabeçalho**: Uso de `Modifier.semantics { heading() }` em títulos principais, cabeçalhos de seções e títulos de livros.
+- **Descrições de Imagens**: Atributos `contentDescription` descritivos em todas as imagens (ex: "Logo do Capitular").
+- **Área de Toque Mínima**: Garantia de área de toque de pelo menos `48x48.dp` (`Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp)`) em botões de ação e navegação soltos (como botões de voltar e sair).
+
 ## Executar tudo
 
 O script abaixo sobe a API e o PostgreSQL com Docker, cria um AVD exclusivo dentro
