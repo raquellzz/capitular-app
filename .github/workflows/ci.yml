@@ -29,5 +29,11 @@ jobs:
       - name: Verificar estilo e qualidade (ktlint e detekt)
         run: ./gradlew ktlintCheck detekt
 
+      - name: Instalar dependências gráficas para testes UI no Linux
+        run: sudo apt-get update && sudo apt-get install -y libgl1 libegl1 libfontconfig1
+
+      - name: Rodar Testes de Interface
+        run: ./gradlew :androidApp:testDebugUnitTest
+
       - name: Compilar o app (Android)
         run: ./gradlew assembleDebug

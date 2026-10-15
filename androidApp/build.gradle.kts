@@ -30,6 +30,9 @@ dependencies {
 
     testImplementation(libs.kotlin.testJunit)
     testImplementation(libs.junit)
+    testImplementation("androidx.compose.ui:ui-test-junit4:1.7.8")
+    testImplementation("androidx.compose.ui:ui-test-manifest:1.7.8")
+    testImplementation("org.robolectric:robolectric:4.14.1")
 }
 
 android {
@@ -63,5 +66,10 @@ android {
     }
     buildFeatures {
         compose = true
+    }
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+        }
     }
 }
