@@ -4,11 +4,15 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
@@ -18,6 +22,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -33,7 +38,26 @@ fun isFormularioValido(pagInicio: String, pagFim: String): Boolean {
     if (!pagInicio.all { it.isDigit() } || !pagFim.all { it.isDigit() }) return false
     val start = pagInicio.toIntOrNull() ?: return false
     val end = pagFim.toIntOrNull() ?: return false
-    return end > start
+    return start > 0 && end > 0 && end > start
+}
+
+fun getFormularioValidationMessage(pagInicio: String, pagFim: String): String? {
+    if (pagInicio.isBlank() && pagFim.isBlank()) return null
+    if (!pagInicio.all { it.isDigit() } || !pagFim.all { it.isDigit() }) {
+        return "Digite apenas números positivos."
+    }
+    val start = pagInicio.toIntOrNull()
+    val end = pagFim.toIntOrNull()
+    if (start != null && start <= 0) {
+        return "A página inicial deve ser maior que zero."
+    }
+    if (end != null && end <= 0) {
+        return "A página final deve ser maior que zero."
+    }
+    if (start != null && end != null && end <= start) {
+        return "A página final não pode ser anterior ou igual à inicial."
+    }
+    return null
 }
 
 @Composable
@@ -43,15 +67,20 @@ fun CheckInScreen(
     onInicioChange: (String) -> Unit,
     onFimChange: (String) -> Unit,
     onSalvarCheckIn: (inicio: String, fim: String) -> Unit,
+    onVoltar: () -> Unit,
     modifier: Modifier = Modifier,
     bookTitle: String = "Livro Atual",
     errorMessage: String? = null,
 ) {
+    val validationWarning = getFormularioValidationMessage(paginaInicial, paginaFinal)
+    val displayError = errorMessage ?: validationWarning
+
     Box(
         modifier =
             modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background),
+                .background(MaterialTheme.colorScheme.background)
+                .windowInsetsPadding(WindowInsets.safeDrawing),
     ) {
         Column(
             modifier =
@@ -60,8 +89,18 @@ fun CheckInScreen(
                     .widthIn(max = 720.dp)
                     .fillMaxWidth()
                     .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Start,
+            ) {
+                TextButton(onClick = onVoltar) {
+                    Text("← Voltar", fontWeight = FontWeight.Bold)
+                }
+            }
+
             Column {
                 Text(
                     text = "REGISTRAR LEITURA",
@@ -113,14 +152,14 @@ fun CheckInScreen(
                         shape = RoundedCornerShape(12.dp),
                     )
 
-                    if (!errorMessage.isNullOrBlank()) {
+                    if (!displayError.isNullOrBlank()) {
                         Surface(
                             color = MaterialTheme.colorScheme.errorContainer,
                             contentColor = MaterialTheme.colorScheme.onErrorContainer,
                             shape = RoundedCornerShape(8.dp),
                         ) {
                             Text(
-                                text = errorMessage,
+                                text = displayError,
                                 modifier = Modifier.padding(12.dp),
                                 style = MaterialTheme.typography.bodySmall,
                             )
@@ -151,6 +190,23 @@ private fun CheckInScreenEmptyPreview() {
             onInicioChange = {},
             onFimChange = {},
             onSalvarCheckIn = { _, _ -> },
+            onVoltar = {},
+            bookTitle = "Torto Arado",
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun CheckInScreenInvalidPreview() {
+    CapitularTheme {
+        CheckInScreen(
+            paginaInicial = "50",
+            paginaFinal = "20",
+            onInicioChange = {},
+            onFimChange = {},
+            onSalvarCheckIn = { _, _ -> },
+            onVoltar = {},
             bookTitle = "Torto Arado",
         )
     }
@@ -166,6 +222,7 @@ private fun CheckInScreenFilledPreview() {
             onInicioChange = {},
             onFimChange = {},
             onSalvarCheckIn = { _, _ -> },
+            onVoltar = {},
             bookTitle = "Torto Arado",
         )
     }

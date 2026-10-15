@@ -179,6 +179,7 @@ fun App() {
                         isCheckInOpen = false
                     }
                 },
+                onVoltar = { isCheckInOpen = false },
                 bookTitle = "Leitura Atual",
                 errorMessage = checkInError,
             )
