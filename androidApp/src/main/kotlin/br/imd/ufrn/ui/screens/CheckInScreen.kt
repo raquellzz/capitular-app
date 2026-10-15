@@ -28,6 +28,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import br.imd.ufrn.ui.CapitularTheme
 
+fun isFormularioValido(pagInicio: String, pagFim: String): Boolean {
+    if (pagInicio.isBlank() || pagFim.isBlank()) return false
+    if (!pagInicio.all { it.isDigit() } || !pagFim.all { it.isDigit() }) return false
+    val start = pagInicio.toIntOrNull() ?: return false
+    val end = pagFim.toIntOrNull() ?: return false
+    return end > start
+}
+
 @Composable
 fun CheckInScreen(
     paginaInicial: String,
@@ -123,6 +131,7 @@ fun CheckInScreen(
                         onClick = { onSalvarCheckIn(paginaInicial, paginaFinal) },
                         modifier = Modifier.fillMaxWidth().height(50.dp),
                         shape = RoundedCornerShape(14.dp),
+                        enabled = isFormularioValido(paginaInicial, paginaFinal),
                     ) {
                         Text("Salvar Check-in", fontWeight = FontWeight.Bold)
                     }
