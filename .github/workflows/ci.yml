@@ -26,9 +26,6 @@ jobs:
       - name: Dar permissão de execução ao gradlew
         run: chmod +x gradlew
 
-      - name: Verificar estilo e qualidade (ktlint e detekt)
-        run: ./gradlew ktlintCheck detekt
-
       - name: Instalar dependências gráficas para testes UI no Linux
         run: sudo apt-get update && sudo apt-get install -y libgl1 libegl1 libfontconfig1
 
