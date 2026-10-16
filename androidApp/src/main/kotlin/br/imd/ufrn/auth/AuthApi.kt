@@ -18,7 +18,7 @@ import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
-fun defaultApiBaseUrl(): String = "http://10.0.2.2:8000"
+fun defaultApiBaseUrl(): String = "http://localhost:8000"
 
 class AuthApi(
     private val baseUrl: String = defaultApiBaseUrl(),

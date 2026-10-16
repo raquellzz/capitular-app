@@ -1,3 +1,10 @@
+try {
+    val pe = Class.forName("java.lang.ProcessEnvironment")
+    val field = pe.getDeclaredField("theEnvironment").apply { isAccessible = true }
+    val map = field.get(null) as? MutableMap<*, *>
+    map?.keys?.removeIf { it.toString() == "ANDROID_PREFS_ROOT" }
+} catch (_: Exception) {}
+
 rootProject.name = "Capitular"
 
 pluginManagement {
