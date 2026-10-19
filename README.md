@@ -11,6 +11,23 @@ Aplicativo Android de leitura social desenvolvido com Kotlin e Jetpack Compose.
 
 O projeto é Android-only. Não possui targets, source sets ou módulos de iOS e desktop.
 
+## Navegação e layout adaptativo
+
+- O grafo usa destinos tipados com `@Serializable` e Navigation Compose.
+- Em largura compacta, Feed e Ranking usam barra de navegação inferior.
+- Em larguras média e expandida, a navegação muda para um trilho lateral.
+- A tela de check-in pode ser aberta externamente por `capitular://check-in`.
+
+Com o emulador em execução, o deep link pode ser demonstrado com:
+
+```shell
+../.android-runtime/sdk/platform-tools/adb -P 5038 -s emulator-5556 \
+  shell am start -W -a android.intent.action.VIEW \
+  -d "capitular://check-in" br.imd.ufrn
+```
+
+O botão “Voltar” e o gesto/botão do sistema retornam ao destino anterior da pilha.
+
 ## Acessibilidade (T8)
 
 O projeto segue as diretrizes de acessibilidade do Jetpack Compose para leitores de tela (TalkBack / VoiceOver):
@@ -50,7 +67,8 @@ Para começar com o estado limpo do emulador:
 ```
 
 Use `./run-android.sh --help` para escolher outro SDK, AVD, porta ou iniciar sem o backend.
-O AVD, os caches Gradle e os logs ficam isolados em `.android`, `.gradle-user-home` e `.run`.
+Quando disponível, o script reutiliza o runtime isolado em `../.android-runtime`; os logs
+da execução ficam em `.run`.
 
 ## Testes
 

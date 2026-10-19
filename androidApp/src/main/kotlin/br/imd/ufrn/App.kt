@@ -1,12 +1,5 @@
 package br.imd.ufrn
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -14,45 +7,34 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.compose.rememberNavController
 import br.imd.ufrn.auth.AuthApi
 import br.imd.ufrn.auth.AuthFormState
 import br.imd.ufrn.auth.AuthMode
-import br.imd.ufrn.auth.AuthSession
-import br.imd.ufrn.ui.AuthScreen
+import br.imd.ufrn.auth.AuthSessionViewModel
+import br.imd.ufrn.navigation.AuthDestination
+import br.imd.ufrn.navigation.CapitularNavHost
+import br.imd.ufrn.navigation.FeedDestination
 import br.imd.ufrn.ui.CapitularTheme
 import br.imd.ufrn.ui.models.CheckIn
 import br.imd.ufrn.ui.models.Ranking
-import br.imd.ufrn.ui.screens.CheckInScreen
-import br.imd.ufrn.ui.screens.FeedScreen
-import br.imd.ufrn.ui.screens.RankingScreen
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
-
-sealed class MainTab {
-    object Feed : MainTab()
-    object Ranking : MainTab()
-}
 
 @Composable
 fun App() {
     CapitularTheme {
+        val navController = rememberNavController()
         val scope = rememberCoroutineScope()
         val authApi = remember { AuthApi() }
+        val authSessionViewModel = viewModel<AuthSessionViewModel>()
         var authForm by remember { mutableStateOf(AuthFormState()) }
-        var session by remember { mutableStateOf<AuthSession?>(null) }
-
-        // App navigation & state after login
-        var currentTab by remember { mutableStateOf<MainTab>(MainTab.Feed) }
-        var isCheckInOpen by remember { mutableStateOf(false) }
-
-        // Form state for CheckInScreen
+        val session = authSessionViewModel.session
         var paginaInicial by remember { mutableStateOf("") }
         var paginaFinal by remember { mutableStateOf("") }
         var checkInError by remember { mutableStateOf<String?>(null) }
 
-        // Mock/live lists
         var checkIns by remember {
             mutableStateOf(
                 listOf(
@@ -74,26 +56,25 @@ fun App() {
                         pagesRead = 24,
                         note = "Leitura antes da aula. Sequência mantida!",
                     ),
-                )
+                ),
             )
         }
 
-        var rankings by remember {
-            mutableStateOf(
+        val rankings =
+            remember {
                 listOf(
                     Ranking(position = 1, name = "Bia Nunes", totalPages = 340),
                     Ranking(position = 2, name = "Você", totalPages = 285),
                     Ranking(position = 3, name = "Ravi Melo", totalPages = 210),
                     Ranking(position = 4, name = "Lia Costa", totalPages = 155),
                 )
-            )
-        }
+            }
 
         DisposableEffect(authApi) {
             onDispose(authApi::close)
         }
 
-        val submit = {
+        val submitAuth: () -> Unit = {
             val validationMessage = authForm.validationMessage()
             if (validationMessage != null) {
                 authForm = authForm.copy(errorMessage = validationMessage)
@@ -101,7 +82,7 @@ fun App() {
                 scope.launch {
                     authForm = authForm.copy(isSubmitting = true, errorMessage = null)
                     try {
-                        session =
+                        val authenticatedSession =
                             when (authForm.mode) {
                                 AuthMode.LOGIN ->
                                     authApi.login(
@@ -117,7 +98,12 @@ fun App() {
                                         password = authForm.password,
                                     )
                             }
+                        authSessionViewModel.authenticate(authenticatedSession)
                         authForm = AuthFormState()
+                        navController.navigate(FeedDestination) {
+                            popUpTo<AuthDestination> { inclusive = true }
+                            launchSingleTop = true
+                        }
                     } catch (error: CancellationException) {
                         throw error
                     } catch (error: Exception) {
@@ -131,100 +117,67 @@ fun App() {
             }
         }
 
-        val activeSession = session
-        if (activeSession == null) {
-            AuthScreen(
-                state = authForm,
-                onModeChange = { mode ->
-                    authForm = AuthFormState(mode = mode)
-                },
-                onIdentifierChange = { authForm = authForm.copy(identifier = it, errorMessage = null) },
-                onEmailChange = { authForm = authForm.copy(email = it, errorMessage = null) },
-                onUsernameChange = { authForm = authForm.copy(username = it, errorMessage = null) },
-                onDisplayNameChange = {
-                    authForm = authForm.copy(displayName = it, errorMessage = null)
-                },
-                onPasswordChange = { authForm = authForm.copy(password = it, errorMessage = null) },
-                onPasswordConfirmationChange = {
-                    authForm = authForm.copy(passwordConfirmation = it, errorMessage = null)
-                },
-                onSubmit = submit,
-            )
-        } else if (isCheckInOpen) {
-            CheckInScreen(
-                paginaInicial = paginaInicial,
-                paginaFinal = paginaFinal,
-                onInicioChange = { paginaInicial = it; checkInError = null },
-                onFimChange = { paginaFinal = it; checkInError = null },
-                onSalvarCheckIn = { inicio, fim ->
-                    val start = inicio.toIntOrNull()
-                    val end = fim.toIntOrNull()
-                    if (start == null || end == null || end <= start) {
-                        checkInError = "Informe páginas válidas (fim deve ser maior que o início)."
-                    } else {
-                        val pages = end - start
-                        val newCheckIn = CheckIn(
+        CapitularNavHost(
+            navController = navController,
+            authForm = authForm,
+            session = session,
+            checkIns = checkIns,
+            rankings = rankings,
+            paginaInicial = paginaInicial,
+            paginaFinal = paginaFinal,
+            checkInError = checkInError,
+            onAuthModeChange = { mode -> authForm = AuthFormState(mode = mode) },
+            onIdentifierChange = { authForm = authForm.copy(identifier = it, errorMessage = null) },
+            onEmailChange = { authForm = authForm.copy(email = it, errorMessage = null) },
+            onUsernameChange = { authForm = authForm.copy(username = it, errorMessage = null) },
+            onDisplayNameChange = { authForm = authForm.copy(displayName = it, errorMessage = null) },
+            onPasswordChange = { authForm = authForm.copy(password = it, errorMessage = null) },
+            onPasswordConfirmationChange = {
+                authForm = authForm.copy(passwordConfirmation = it, errorMessage = null)
+            },
+            onSubmitAuth = submitAuth,
+            onLogout = {
+                val activeSession = session
+                authSessionViewModel.clearSession()
+                authForm = AuthFormState()
+                if (activeSession != null) {
+                    scope.launch {
+                        authApi.logout(activeSession.tokens.refreshToken)
+                    }
+                }
+            },
+            onPaginaInicialChange = {
+                paginaInicial = it
+                checkInError = null
+            },
+            onPaginaFinalChange = {
+                paginaFinal = it
+                checkInError = null
+            },
+            onSalvarCheckIn = { inicio, fim ->
+                val start = inicio.toIntOrNull()
+                val end = fim.toIntOrNull()
+                if (start == null || end == null || end <= start) {
+                    checkInError = "Informe páginas válidas (fim deve ser maior que o início)."
+                } else {
+                    val pages = end - start
+                    val newCheckIn =
+                        CheckIn(
                             id = System.currentTimeMillis().toString(),
-                            friendName = activeSession.user.displayName,
+                            friendName = session?.user?.displayName ?: "Você",
                             bookTitle = "Leitura Atual",
                             pageRange = "pág. $start a $end",
                             timeElapsed = "agora",
                             pagesRead = pages,
                             note = "Novo check-in registrado!",
                         )
-                        checkIns = listOf(newCheckIn) + checkIns
-                        paginaInicial = ""
-                        paginaFinal = ""
-                        checkInError = null
-                        isCheckInOpen = false
-                    }
-                },
-                onVoltar = { isCheckInOpen = false },
-                bookTitle = "Leitura Atual",
-                errorMessage = checkInError,
-            )
-        } else {
-            Scaffold(
-                bottomBar = {
-                    NavigationBar {
-                        NavigationBarItem(
-                            icon = { Text("📖", fontSize = 18.sp) },
-                            label = { Text("Feed") },
-                            selected = currentTab is MainTab.Feed,
-                            onClick = { currentTab = MainTab.Feed },
-                        )
-                        NavigationBarItem(
-                            icon = { Text("🏆", fontSize = 18.sp) },
-                            label = { Text("Ranking") },
-                            selected = currentTab is MainTab.Ranking,
-                            onClick = { currentTab = MainTab.Ranking },
-                        )
-                    }
+                    checkIns = listOf(newCheckIn) + checkIns
+                    paginaInicial = ""
+                    paginaFinal = ""
+                    checkInError = null
+                    navController.popBackStack()
                 }
-            ) { paddingValues ->
-                Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-                    when (currentTab) {
-                        MainTab.Feed -> {
-                            FeedScreen(
-                                userName = activeSession.user.displayName,
-                                onLogout = {
-                                    session = null
-                                    scope.launch {
-                                        authApi.logout(activeSession.tokens.refreshToken)
-                                    }
-                                },
-                                checkIns = checkIns,
-                                onNovoCheckInClick = { isCheckInOpen = true },
-                            )
-                        }
-                        MainTab.Ranking -> {
-                            RankingScreen(
-                                rankings = rankings,
-                            )
-                        }
-                    }
-                }
-            }
-        }
+            },
+        )
     }
 }
