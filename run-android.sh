@@ -6,12 +6,13 @@ readonly SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 readonly PROJECT_ROOT="$SCRIPT_DIR"
 readonly BACKEND_ROOT="$(cd -- "$PROJECT_ROOT/../capitular-backend" 2>/dev/null && pwd || true)"
 
-AVD_NAME="capitular_isolated_api34"
+AVD_NAME="capitular_isolated_api36"
 EMULATOR_PORT="5556"
 PORT_EXPLICIT=false
 SDK_OVERRIDE=""
 START_BACKEND=true
 CLEAN_BOOT=false
+HEADLESS=false
 BOOT_TIMEOUT_SECONDS=240
 
 usage() {
@@ -23,6 +24,7 @@ instala o APK de debug e abre o aplicativo.
 
 Opções:
   --no-backend       Não inicia o backend/PostgreSQL com Docker.
+  --headless         Executa o emulador sem abrir uma janela.
   --clean            Apaga os dados do AVD exclusivo antes de iniciar.
   --avd NOME         Nome do AVD isolado (padrão: capitular_isolated_api36).
   --port PORTA       Porta par do emulador (padrão: 5556).
@@ -50,6 +52,10 @@ while (($# > 0)); do
     case "$1" in
         --no-backend)
             START_BACKEND=false
+            shift
+            ;;
+        --headless)
+            HEADLESS=true
             shift
             ;;
         --clean)
@@ -124,6 +130,7 @@ resolve_android_sdk() {
     fi
 
     candidates+=(
+        "$PROJECT_ROOT/../.android-runtime/sdk"
         "/private/tmp/capitular-android-codex/sdk"
         "/Users/${USER}/Library/Android/sdk"
         "/Users/${USER}/Android/Sdk"
@@ -194,8 +201,8 @@ case "$(uname -m)" in
         ;;
 esac
 
-readonly SYSTEM_IMAGE="system-images;android-34;google_apis;${SYSTEM_IMAGE_ABI}"
-readonly SYSTEM_IMAGE_DIR="$SDK_ROOT/system-images/android-34/google_apis/$SYSTEM_IMAGE_ABI"
+readonly SYSTEM_IMAGE="system-images;android-36;google_apis;${SYSTEM_IMAGE_ABI}"
+readonly SYSTEM_IMAGE_DIR="$SDK_ROOT/system-images/android-36/google_apis/$SYSTEM_IMAGE_ABI"
 
 avd_is_configured() {
     [[ -f "$ANDROID_AVD_HOME/$AVD_NAME.ini" || -d "$ANDROID_AVD_HOME/$AVD_NAME.avd" ]]
@@ -206,8 +213,8 @@ install_missing_sdk_packages() {
 
     [[ -x "$ADB_BIN" ]] || packages+=("platform-tools")
     [[ -x "$EMULATOR_BIN" ]] || packages+=("emulator")
-    [[ -d "$SDK_ROOT/platforms/android-34" ]] || packages+=("platforms;android-34")
-    [[ -d "$SDK_ROOT/build-tools/34.0.0" ]] || packages+=("build-tools;34.0.0")
+    [[ -d "$SDK_ROOT/platforms/android-36" ]] || packages+=("platforms;android-36")
+    [[ -d "$SDK_ROOT/build-tools/36.0.0" ]] || packages+=("build-tools;36.0.0")
     # Um AVD existente pode usar outra variante da imagem (por exemplo,
     # "default"). Só precisamos baixar a imagem escolhida quando for criar
     # um AVD novo.
@@ -320,7 +327,14 @@ readonly EMULATOR_SERIAL="emulator-${EMULATOR_PORT}"
 
 if [[ "$CLEAN_BOOT" == true ]] && "$ADB_BIN" -s "$EMULATOR_SERIAL" get-state >/dev/null 2>&1; then
     log "Encerrando o AVD exclusivo para limpar os dados"
-    "$ADB_BIN" -s "$EMULATOR_SERIAL" emu kill >/dev/null
+    # Quando o emulador foi iniciado por launchd, remover o job evita que ele
+    # seja reiniciado automaticamente enquanto os dados do AVD são apagados.
+    if command -v launchctl >/dev/null 2>&1 &&
+        launchctl print "gui/$(id -u)/$EMULATOR_LAUNCHD_LABEL" >/dev/null 2>&1; then
+        launchctl remove "$EMULATOR_LAUNCHD_LABEL" >/dev/null 2>&1 || true
+    else
+        "$ADB_BIN" -s "$EMULATOR_SERIAL" emu kill >/dev/null
+    fi
     shutdown_deadline=$((SECONDS + 30))
     while "$ADB_BIN" -s "$EMULATOR_SERIAL" get-state >/dev/null 2>&1; do
         ((SECONDS < shutdown_deadline)) || fail "o emulador não encerrou dentro de 30 segundos."
@@ -389,8 +403,11 @@ start_emulator() {
         -no-metrics
         -camera-back virtualscene
         -gpu off
-        -no-window
     )
+
+    if [[ "$HEADLESS" == true ]]; then
+        emulator_args+=(-no-window)
+    fi
 
     if command -v launchctl >/dev/null 2>&1 && launchctl print "$launchd_domain" >/dev/null 2>&1; then
         # launchd desacopla o emulador do terminal que executou este script.
@@ -437,8 +454,19 @@ while true; do
     if [[ -f "$EMULATOR_PID_FILE" ]]; then
         emulator_pid="$(cat "$EMULATOR_PID_FILE")"
         if [[ -n "$emulator_pid" ]] && ! kill -0 "$emulator_pid" 2>/dev/null; then
-            tail -n 40 "$EMULATOR_LOG" >&2 || true
-            fail "o emulador encerrou antes de concluir o boot."
+            # launchd pode reiniciar o binário interno do emulador e trocar o
+            # PID durante o primeiro boot. Atualize o PID em vez de reportar
+            # uma falha falsa enquanto o job ainda estiver ativo.
+            replacement_pid="$(
+                launchctl print "gui/$(id -u)/$EMULATOR_LAUNCHD_LABEL" 2>/dev/null |
+                    awk '$1 == "pid" && $2 == "=" { print $3; exit }' || true
+            )"
+            if [[ -n "$replacement_pid" ]] && kill -0 "$replacement_pid" 2>/dev/null; then
+                printf '%s\n' "$replacement_pid" >"$EMULATOR_PID_FILE"
+            else
+                tail -n 40 "$EMULATOR_LOG" >&2 || true
+                fail "o emulador encerrou antes de concluir o boot."
+            fi
         fi
     fi
     ((SECONDS < boot_deadline)) || fail "timeout aguardando o boot. Log: $EMULATOR_LOG"
