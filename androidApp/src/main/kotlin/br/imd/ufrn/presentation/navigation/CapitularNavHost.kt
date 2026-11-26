@@ -5,6 +5,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navDeepLink
+import androidx.navigation.toRoute
 import br.imd.ufrn.auth.AuthFormState
 import br.imd.ufrn.auth.AuthMode
 import br.imd.ufrn.auth.AuthSession
@@ -14,6 +15,8 @@ import br.imd.ufrn.presentation.model.Ranking
 import br.imd.ufrn.presentation.screens.CheckInScreen
 import br.imd.ufrn.presentation.screens.FeedScreen
 import br.imd.ufrn.presentation.screens.RankingScreen
+import br.imd.ufrn.presentation.grupo.GrupoRota
+import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun CapitularNavHost(
@@ -56,12 +59,32 @@ fun CapitularNavHost(
             )
         }
 
-        composable<FeedDestination> {
+        composable<GrupoDestination> {
+            GrupoRota(
+                viewModel = koinViewModel(),
+                onGrupoPronto = { grupoId ->
+                    navController.navigate(FeedDestination(grupoId)) {
+                        popUpTo<GrupoDestination> { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
+                onSair = {
+                    onLogout()
+                    navController.navigate(AuthDestination) {
+                        popUpTo<GrupoDestination> { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
+            )
+        }
+
+        composable<FeedDestination> { entrada ->
+            val feed = entrada.toRoute<FeedDestination>()
             AdaptiveMainScaffold(
                 selectedDestination = MainDestination.FEED,
                 onFeedClick = {},
                 onRankingClick = {
-                    navController.navigate(RankingDestination) {
+                    navController.navigate(RankingDestination(feed.grupoId)) {
                         launchSingleTop = true
                     }
                 },
@@ -82,12 +105,13 @@ fun CapitularNavHost(
             }
         }
 
-        composable<RankingDestination> {
+        composable<RankingDestination> { entrada ->
+            val ranking = entrada.toRoute<RankingDestination>()
             AdaptiveMainScaffold(
                 selectedDestination = MainDestination.RANKING,
                 onFeedClick = {
                     if (!navController.popBackStack<FeedDestination>(inclusive = false)) {
-                        navController.navigate(FeedDestination) {
+                        navController.navigate(FeedDestination(ranking.grupoId)) {
                             launchSingleTop = true
                         }
                     }

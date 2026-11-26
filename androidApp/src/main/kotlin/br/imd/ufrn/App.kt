@@ -16,7 +16,7 @@ import br.imd.ufrn.auth.AuthSessionViewModel
 import br.imd.ufrn.data.remoto.SessaoEmMemoria
 import br.imd.ufrn.presentation.navigation.AuthDestination
 import br.imd.ufrn.presentation.navigation.CapitularNavHost
-import br.imd.ufrn.presentation.navigation.FeedDestination
+import br.imd.ufrn.presentation.navigation.GrupoDestination
 import br.imd.ufrn.presentation.theme.CapitularTheme
 import br.imd.ufrn.presentation.model.CheckIn
 import br.imd.ufrn.presentation.model.Ranking
@@ -104,7 +104,7 @@ fun App() {
                         authSessionViewModel.authenticate(authenticatedSession)
                         sessaoEmMemoria.token = authenticatedSession.tokens.accessToken
                         authForm = AuthFormState()
-                        navController.navigate(FeedDestination) {
+                        navController.navigate(GrupoDestination) {
                             popUpTo<AuthDestination> { inclusive = true }
                             launchSingleTop = true
                         }
