@@ -100,48 +100,61 @@ fun CheckInCard(
                 }
             }
 
-            // Photo / Book cover placeholder section
-            Box(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .aspectRatio(1.8f)
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.85f)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Surface(
-                    modifier = Modifier.widthIn(max = 210.dp).fillMaxWidth(0.55f).rotate(-4f),
-                    color = MaterialTheme.colorScheme.surface,
-                    contentColor = MaterialTheme.colorScheme.onSurface,
-                    shape = RoundedCornerShape(4.dp),
-                    shadowElevation = 10.dp,
+            // Foto da leitura; sem foto (ou em testes/previews), o ilustrativo com o título.
+            val formatoDaFoto = Modifier.fillMaxWidth().aspectRatio(1.8f)
+            val ilustrativo: @Composable () -> Unit = {
+                Box(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .aspectRatio(1.8f)
+                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.85f)),
+                    contentAlignment = Alignment.Center,
                 ) {
-                    Column(
-                        modifier = Modifier.aspectRatio(0.72f).padding(18.dp),
-                        verticalArrangement = Arrangement.SpaceBetween,
+                    Surface(
+                        modifier = Modifier.widthIn(max = 210.dp).fillMaxWidth(0.55f).rotate(-4f),
+                        color = MaterialTheme.colorScheme.surface,
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                        shape = RoundedCornerShape(4.dp),
+                        shadowElevation = 10.dp,
                     ) {
-                        Text(
-                            text = "CAPITULAR",
-                            color = MaterialTheme.colorScheme.primary,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Black,
-                            letterSpacing = 1.2.sp,
-                        )
-                        Text(
-                            text = bookTitle,
-                            fontWeight = FontWeight.Black,
-                            style = MaterialTheme.typography.titleMedium,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                        Text(
-                            text = "LEITURA DO DIA",
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                            fontSize = 9.sp,
-                            fontWeight = FontWeight.Bold,
-                        )
+                        Column(
+                            modifier = Modifier.aspectRatio(0.72f).padding(18.dp),
+                            verticalArrangement = Arrangement.SpaceBetween,
+                        ) {
+                            Text(
+                                text = "CAPITULAR",
+                                color = MaterialTheme.colorScheme.primary,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Black,
+                                letterSpacing = 1.2.sp,
+                            )
+                            Text(
+                                text = bookTitle,
+                                fontWeight = FontWeight.Black,
+                                style = MaterialTheme.typography.titleMedium,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            Text(
+                                text = "LEITURA DO DIA",
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Bold,
+                            )
+                        }
                     }
                 }
+            }
+            if (photoUrl != null) {
+                FotoRemota(
+                    url = photoUrl,
+                    contentDescription = "Foto da leitura de $friendName: $bookTitle",
+                    modifier = formatoDaFoto,
+                    semFoto = ilustrativo,
+                )
+            } else {
+                ilustrativo()
             }
 
             Column(Modifier.padding(16.dp)) {

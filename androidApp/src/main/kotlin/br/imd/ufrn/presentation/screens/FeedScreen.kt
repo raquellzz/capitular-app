@@ -2,6 +2,7 @@ package br.imd.ufrn.presentation.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,41 +20,98 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.draw.clip
-import androidx.compose.foundation.clickable
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.LifecycleResumeEffect
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import br.imd.ufrn.R
-import br.imd.ufrn.presentation.theme.CapitularTheme
+import br.imd.ufrn.domain.feed.Estatisticas
+import br.imd.ufrn.presentation.EstadoDaTela
 import br.imd.ufrn.presentation.components.CheckInCard
-import br.imd.ufrn.presentation.components.RankingItem
+import br.imd.ufrn.presentation.feed.FeedViewModel
+import br.imd.ufrn.presentation.feed.paraCartao
 import br.imd.ufrn.presentation.model.CheckIn
+import br.imd.ufrn.presentation.theme.CapitularTheme
+import java.time.Instant
+
+/**
+ * Liga a [FeedScreen] ao [FeedViewModel]. O feed é recarregado sempre que a
+ * tela volta a aparecer, por exemplo depois de registrar uma leitura.
+ */
+@Composable
+fun FeedRota(
+    viewModel: FeedViewModel,
+    userName: String,
+    nomeDoGrupo: String,
+    onAbrirGrupos: () -> Unit,
+    onLogout: () -> Unit,
+    onNovoCheckInClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    LifecycleResumeEffect(viewModel) {
+        viewModel.atualizar()
+        onPauseOrDispose {}
+    }
+    val estado by viewModel.estado.collectAsStateWithLifecycle()
+    val resumo by viewModel.resumo.collectAsStateWithLifecycle()
+    val aviso by viewModel.aviso.collectAsStateWithLifecycle()
+    val agora = Instant.now()
+
+    FeedScreen(
+        userName = userName,
+        nomeDoGrupo = nomeDoGrupo,
+        estado =
+            when (val atual = estado) {
+                EstadoDaTela.Carregando -> EstadoDaTela.Carregando
+                EstadoDaTela.Vazio -> EstadoDaTela.Vazio
+                is EstadoDaTela.Erro -> atual
+                is EstadoDaTela.Sucesso -> EstadoDaTela.Sucesso(atual.dados.map { it.paraCartao(agora) }, atual.desatualizado)
+            },
+        resumo = resumo,
+        aviso = aviso,
+        onAbrirGrupos = onAbrirGrupos,
+        onLogout = onLogout,
+        onNovoCheckInClick = onNovoCheckInClick,
+        onTentarDeNovo = viewModel::atualizar,
+        onFecharAviso = viewModel::avisoVisto,
+        modifier = modifier,
+    )
+}
 
 @Composable
 fun FeedScreen(
     userName: String,
     nomeDoGrupo: String,
+    estado: EstadoDaTela<List<CheckIn>>,
     onAbrirGrupos: () -> Unit,
     onLogout: () -> Unit,
-    checkIns: List<CheckIn>,
     onNovoCheckInClick: () -> Unit,
+    onTentarDeNovo: () -> Unit,
     modifier: Modifier = Modifier,
+    resumo: Estatisticas? = null,
+    aviso: String? = null,
+    onFecharAviso: () -> Unit = {},
 ) {
     Box(
         modifier =
@@ -66,76 +124,68 @@ fun FeedScreen(
             contentPadding = PaddingValues(start = 20.dp, top = 20.dp, end = 20.dp, bottom = 104.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
+            item { FeedHeader(userName = userName, onLogout = onLogout) }
+            item { GrupoAtivo(nome = nomeDoGrupo, onClick = onAbrirGrupos) }
+            resumo?.let { numeros -> item { ResumoDeLeitura(numeros) } }
+            aviso?.let { mensagem -> item { AvisoDoFeed(mensagem, onFecharAviso) } }
             item {
-                FeedHeader(userName = userName, onLogout = onLogout)
-            }
-            item {
-                GrupoAtivo(nome = nomeDoGrupo, onClick = onAbrirGrupos)
-            }
-            item {
-                WeeklySummary()
-            }
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-                    verticalAlignment = Alignment.Bottom,
-                ) {
-                    Column {
-                        Text(
-                            text = "ATIVIDADE DO GRUPO",
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 1.2.sp,
-                        )
-                        Text(
-                            text = "Leituras recentes",
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.semantics { heading() },
-                        )
-                    }
+                Column(Modifier.padding(top = 4.dp)) {
+                    Text(
+                        text = "ATIVIDADE DO GRUPO",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.2.sp,
+                    )
+                    Text(
+                        text = "Leituras recentes",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.semantics { heading() },
+                    )
                 }
             }
 
-            if (checkIns.isEmpty()) {
-                item {
-                    Surface(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp),
-                        color = MaterialTheme.colorScheme.surface,
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(24.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            Text(
-                                text = "Nenhum check-in recente",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                            )
-                            Text(
-                                text = "Seja o primeiro do grupo a registrar sua leitura hoje!",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            when (estado) {
+                EstadoDaTela.Carregando ->
+                    item {
+                        Box(Modifier.fillMaxWidth().padding(40.dp), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.semantics { contentDescription = "Carregando as leituras do grupo" },
                             )
                         }
                     }
-                }
-            } else {
-                items(checkIns) { checkIn ->
-                    CheckInCard(
-                        friendName = checkIn.friendName,
-                        bookTitle = checkIn.bookTitle,
-                        pageRange = checkIn.pageRange,
-                        timeElapsed = checkIn.timeElapsed,
-                        photoUrl = checkIn.photoUrl,
-                        avatarUrl = checkIn.avatarUrl,
-                        pagesRead = checkIn.pagesRead,
-                        note = checkIn.note,
-                    )
-                }
+                EstadoDaTela.Vazio ->
+                    item {
+                        MensagemDoFeed(
+                            titulo = "Nenhuma leitura ainda",
+                            texto = "Seja a primeira pessoa do grupo a registrar uma leitura hoje!",
+                            acao = "Registrar leitura",
+                            onAcao = onNovoCheckInClick,
+                        )
+                    }
+                is EstadoDaTela.Erro ->
+                    item {
+                        MensagemDoFeed(
+                            titulo = "Não deu para carregar o feed",
+                            texto = estado.mensagem,
+                            acao = "Tentar de novo",
+                            onAcao = onTentarDeNovo,
+                        )
+                    }
+                is EstadoDaTela.Sucesso ->
+                    items(estado.dados, key = { it.id }) { checkIn ->
+                        CheckInCard(
+                            friendName = checkIn.friendName,
+                            bookTitle = checkIn.bookTitle,
+                            pageRange = checkIn.pageRange,
+                            timeElapsed = checkIn.timeElapsed,
+                            photoUrl = checkIn.photoUrl,
+                            avatarUrl = checkIn.avatarUrl,
+                            pagesRead = checkIn.pagesRead,
+                            note = checkIn.note,
+                        )
+                    }
             }
         }
 
@@ -245,8 +295,9 @@ private fun GrupoAtivo(
     }
 }
 
+/** Sequência de dias lendo e totais do usuário, vindos de `users/me/stats`. */
 @Composable
-private fun WeeklySummary() {
+private fun ResumoDeLeitura(numeros: Estatisticas) {
     Surface(
         color = MaterialTheme.colorScheme.primaryContainer,
         contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -258,7 +309,7 @@ private fun WeeklySummary() {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Column {
+                Column(Modifier.weight(1f)) {
                     Text(
                         text = "SUA SEQUÊNCIA",
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.64f),
@@ -267,19 +318,21 @@ private fun WeeklySummary() {
                         letterSpacing = 1.1.sp,
                     )
                     Text(
-                        text = "7 dias lendo",
+                        text =
+                            when (numeros.sequenciaAtual) {
+                                0 -> "Comece hoje!"
+                                1 -> "1 dia lendo"
+                                else -> "${numeros.sequenciaAtual} dias lendo"
+                            },
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Black,
                         modifier = Modifier.semantics { heading() },
                     )
                 }
-                Surface(
-                    color = MaterialTheme.colorScheme.surface,
-                    shape = CircleShape,
-                ) {
+                Surface(color = MaterialTheme.colorScheme.surface, shape = CircleShape) {
                     Text(
-                        text = "7",
-                        modifier = Modifier.padding(horizontal = 18.dp, vertical = 11.dp),
+                        text = numeros.sequenciaAtual.toString(),
+                        modifier = Modifier.padding(horizontal = 18.dp, vertical = 11.dp).clearAndSetSemantics {},
                         color = MaterialTheme.colorScheme.primary,
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Black,
@@ -290,51 +343,130 @@ private fun WeeklySummary() {
                 modifier = Modifier.padding(vertical = 16.dp),
                 color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.16f),
             )
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                RankingItem(position = "1º", name = "Bia", scorePages = "187 pág.")
-                RankingItem(position = "2º", name = "Você", scorePages = "143 pág.")
-                RankingItem(position = "3º", name = "Ravi", scorePages = "121 pág.")
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Numero(valor = numeros.paginasLidas, rotulo = "páginas lidas")
+                Numero(valor = numeros.checkIns, rotulo = "leituras")
+                Numero(valor = numeros.maiorSequencia, rotulo = "maior sequência")
             }
         }
     }
 }
 
-@Preview(showBackground = true)
 @Composable
-private fun FeedScreenFilledPreview() {
-    val sampleCheckIns =
-        listOf(
-            CheckIn(
-                id = "1",
-                friendName = "Bia Nunes",
-                bookTitle = "Torto Arado",
-                pageRange = "pág. 84 a 112",
-                timeElapsed = "há 18 min",
-                pagesRead = 29,
-                note = "A história da Belonísia não sai da cabeça.",
-            ),
-            CheckIn(
-                id = "2",
-                friendName = "Ravi Melo",
-                bookTitle = "A vida invisível de Addie LaRue",
-                pageRange = "pág. 201 a 224",
-                timeElapsed = "há 2 h",
-                pagesRead = 24,
-                note = "Leitura antes da aula. Sequência mantida!",
-            ),
-        )
+private fun Numero(
+    valor: Int,
+    rotulo: String,
+) {
+    Column(Modifier.semantics(mergeDescendants = true) {}) {
+        Text(valor.toString(), fontWeight = FontWeight.Black, fontSize = 18.sp)
+        Text(rotulo, fontSize = 11.sp, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f))
+    }
+}
 
+@Composable
+private fun MensagemDoFeed(
+    titulo: String,
+    texto: String,
+    acao: String,
+    onAcao: () -> Unit,
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surface,
+    ) {
+        Column(
+            modifier = Modifier.padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(text = titulo, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(
+                text = texto,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
+            TextButton(onClick = onAcao) { Text(acao, fontWeight = FontWeight.Bold) }
+        }
+    }
+}
+
+@Composable
+private fun AvisoDoFeed(
+    mensagem: String,
+    onFechar: () -> Unit,
+) {
+    Surface(
+        color = MaterialTheme.colorScheme.errorContainer,
+        contentColor = MaterialTheme.colorScheme.onErrorContainer,
+        shape = RoundedCornerShape(12.dp),
+    ) {
+        Row(Modifier.padding(start = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(mensagem, modifier = Modifier.weight(1f))
+            TextButton(onClick = onFechar) { Text("OK") }
+        }
+    }
+}
+
+@Preview(showBackground = true, heightDp = 1200)
+@Composable
+private fun FeedComLeiturasPreview() {
     CapitularTheme {
         FeedScreen(
             userName = "Ana Lima",
             nomeDoGrupo = "Clube do Torto Arado",
+            estado =
+                EstadoDaTela.Sucesso(
+                    listOf(
+                        CheckIn(
+                            id = "1",
+                            friendName = "Bia Nunes",
+                            bookTitle = "Torto Arado",
+                            pageRange = "pág. 84 a 112",
+                            timeElapsed = "há 18 min",
+                            pagesRead = 29,
+                            note = "A história da Belonísia não sai da cabeça.",
+                        ),
+                    ),
+                ),
+            resumo = Estatisticas(paginasLidas = 340, checkIns = 12, sequenciaAtual = 7, maiorSequencia = 9),
             onAbrirGrupos = {},
             onLogout = {},
-            checkIns = sampleCheckIns,
             onNovoCheckInClick = {},
+            onTentarDeNovo = {},
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun FeedVazioPreview() {
+    CapitularTheme {
+        FeedScreen(
+            userName = "Ana Lima",
+            nomeDoGrupo = "Clube do Torto Arado",
+            estado = EstadoDaTela.Vazio,
+            onAbrirGrupos = {},
+            onLogout = {},
+            onNovoCheckInClick = {},
+            onTentarDeNovo = {},
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun FeedErroPreview() {
+    CapitularTheme {
+        FeedScreen(
+            userName = "Ana Lima",
+            nomeDoGrupo = "Clube do Torto Arado",
+            estado = EstadoDaTela.Erro("Sem conexão com o Capitular. Verifique sua internet e tente de novo."),
+            onAbrirGrupos = {},
+            onLogout = {},
+            onNovoCheckInClick = {},
+            onTentarDeNovo = {},
         )
     }
 }

@@ -18,11 +18,13 @@ import br.imd.ufrn.presentation.navigation.AuthDestination
 import br.imd.ufrn.presentation.navigation.CapitularNavHost
 import br.imd.ufrn.presentation.navigation.GrupoDestination
 import br.imd.ufrn.presentation.theme.CapitularTheme
-import br.imd.ufrn.presentation.model.CheckIn
 import br.imd.ufrn.presentation.model.Ranking
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
+import androidx.compose.runtime.CompositionLocalProvider
+import br.imd.ufrn.data.remoto.CarregadorDeFotos
+import br.imd.ufrn.presentation.components.LocalCarregadorDeFotos
 
 @Composable
 fun App() {
@@ -34,35 +36,7 @@ fun App() {
         val sessaoEmMemoria = koinInject<SessaoEmMemoria>()
         var authForm by remember { mutableStateOf(AuthFormState()) }
         val session = authSessionViewModel.session
-        var paginaInicial by remember { mutableStateOf("") }
-        var paginaFinal by remember { mutableStateOf("") }
-        var checkInError by remember { mutableStateOf<String?>(null) }
-
-        var checkIns by remember {
-            mutableStateOf(
-                listOf(
-                    CheckIn(
-                        id = "1",
-                        friendName = "Bia Nunes",
-                        bookTitle = "Torto Arado",
-                        pageRange = "pág. 84 a 112",
-                        timeElapsed = "há 18 min",
-                        pagesRead = 29,
-                        note = "A história da Belonísia não sai da cabeça.",
-                    ),
-                    CheckIn(
-                        id = "2",
-                        friendName = "Ravi Melo",
-                        bookTitle = "A vida invisível de Addie LaRue",
-                        pageRange = "pág. 201 a 224",
-                        timeElapsed = "há 2 h",
-                        pagesRead = 24,
-                        note = "Leitura antes da aula. Sequência mantida!",
-                    ),
-                ),
-            )
-        }
-
+        // Ranking ainda fixo: vem do backend na issue de Auth e Ranking (Pablo).
         val rankings =
             remember {
                 listOf(
@@ -121,15 +95,12 @@ fun App() {
             }
         }
 
+        CompositionLocalProvider(LocalCarregadorDeFotos provides koinInject<CarregadorDeFotos>()) {
         CapitularNavHost(
             navController = navController,
             authForm = authForm,
             session = session,
-            checkIns = checkIns,
             rankings = rankings,
-            paginaInicial = paginaInicial,
-            paginaFinal = paginaFinal,
-            checkInError = checkInError,
             onAuthModeChange = { mode -> authForm = AuthFormState(mode = mode) },
             onIdentifierChange = { authForm = authForm.copy(identifier = it, errorMessage = null) },
             onEmailChange = { authForm = authForm.copy(email = it, errorMessage = null) },
@@ -151,38 +122,7 @@ fun App() {
                     }
                 }
             },
-            onPaginaInicialChange = {
-                paginaInicial = it
-                checkInError = null
-            },
-            onPaginaFinalChange = {
-                paginaFinal = it
-                checkInError = null
-            },
-            onSalvarCheckIn = { inicio, fim ->
-                val start = inicio.toIntOrNull()
-                val end = fim.toIntOrNull()
-                if (start == null || end == null || end <= start) {
-                    checkInError = "Informe páginas válidas (fim deve ser maior que o início)."
-                } else {
-                    val pages = end - start
-                    val newCheckIn =
-                        CheckIn(
-                            id = System.currentTimeMillis().toString(),
-                            friendName = session?.user?.displayName ?: "Você",
-                            bookTitle = "Leitura Atual",
-                            pageRange = "pág. $start a $end",
-                            timeElapsed = "agora",
-                            pagesRead = pages,
-                            note = "Novo check-in registrado!",
-                        )
-                    checkIns = listOf(newCheckIn) + checkIns
-                    paginaInicial = ""
-                    paginaFinal = ""
-                    checkInError = null
-                    navController.popBackStack()
-                }
-            },
         )
+        }
     }
 }

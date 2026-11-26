@@ -185,3 +185,27 @@ class FeedRepositoryRemotoTest {
         assertEquals("Use uma foto JPEG, PNG ou WebP.", RegrasDoCheckIn.validarFoto(FotoDaLeitura(byteArrayOf(), "image/gif")))
     }
 }
+
+class EstatisticasRepositoryRemotoTest {
+    @Test
+    fun converteOsNumerosDoUsuario() =
+        runTest {
+            val cliente =
+                criarClienteHttp(
+                    engine =
+                        MockEngine {
+                            respond(
+                                """{"pages_read":340,"checkins":12,"current_streak":7,"longest_streak":9}""",
+                                HttpStatusCode.OK,
+                                headersOf(HttpHeaders.ContentType, "application/json"),
+                            )
+                        },
+                    baseUrl = "http://servidor:8000",
+                    provedorDeToken = SessaoEmMemoria(),
+                )
+
+            val numeros = EstatisticasRepositoryRemoto(cliente).minhas()
+
+            assertEquals(br.imd.ufrn.domain.feed.Estatisticas(340, 12, 7, 9), numeros)
+        }
+}

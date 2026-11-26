@@ -10,10 +10,9 @@ import br.imd.ufrn.auth.AuthFormState
 import br.imd.ufrn.auth.AuthMode
 import br.imd.ufrn.auth.AuthSession
 import br.imd.ufrn.presentation.screens.AuthScreen
-import br.imd.ufrn.presentation.model.CheckIn
 import br.imd.ufrn.presentation.model.Ranking
-import br.imd.ufrn.presentation.screens.CheckInScreen
-import br.imd.ufrn.presentation.screens.FeedScreen
+import br.imd.ufrn.presentation.screens.CheckInRota
+import br.imd.ufrn.presentation.screens.FeedRota
 import br.imd.ufrn.presentation.screens.RankingScreen
 import br.imd.ufrn.presentation.grupo.GrupoRota
 import br.imd.ufrn.presentation.grupo.MeusGruposRota
@@ -25,11 +24,7 @@ fun CapitularNavHost(
     navController: NavHostController,
     authForm: AuthFormState,
     session: AuthSession?,
-    checkIns: List<CheckIn>,
     rankings: List<Ranking>,
-    paginaInicial: String,
-    paginaFinal: String,
-    checkInError: String?,
     onAuthModeChange: (AuthMode) -> Unit,
     onIdentifierChange: (String) -> Unit,
     onEmailChange: (String) -> Unit,
@@ -39,9 +34,6 @@ fun CapitularNavHost(
     onPasswordConfirmationChange: (String) -> Unit,
     onSubmitAuth: () -> Unit,
     onLogout: () -> Unit,
-    onPaginaInicialChange: (String) -> Unit,
-    onPaginaFinalChange: (String) -> Unit,
-    onSalvarCheckIn: (inicio: String, fim: String) -> Unit,
 ) {
     // Abas (Feed, Ranking, Grupos): a pilha fica sempre Feed -> aba, sem crescer.
     fun abrirAba(destino: Any) =
@@ -102,7 +94,8 @@ fun CapitularNavHost(
                 onRankingClick = { abrirAba(RankingDestination(feed.grupoId)) },
                 onGruposClick = { abrirAba(GruposDestination(feed.grupoId)) },
             ) { contentModifier ->
-                FeedScreen(
+                FeedRota(
+                    viewModel = koinViewModel { parametersOf(feed.grupoId) },
                     userName = session?.user?.displayName ?: "Leitor",
                     nomeDoGrupo = feed.grupoNome,
                     onAbrirGrupos = { abrirAba(GruposDestination(feed.grupoId)) },
@@ -113,8 +106,7 @@ fun CapitularNavHost(
                             launchSingleTop = true
                         }
                     },
-                    checkIns = checkIns,
-                    onNovoCheckInClick = { navController.navigate(CheckInDestination) },
+                    onNovoCheckInClick = { navController.navigate(CheckInDestination(feed.grupoId)) },
                     modifier = contentModifier,
                 )
             }
@@ -166,16 +158,14 @@ fun CapitularNavHost(
                 listOf(
                     navDeepLink<CheckInDestination>(basePath = CHECK_IN_DEEP_LINK),
                 ),
-        ) {
-            CheckInScreen(
-                paginaInicial = paginaInicial,
-                paginaFinal = paginaFinal,
-                onInicioChange = onPaginaInicialChange,
-                onFimChange = onPaginaFinalChange,
-                onSalvarCheckIn = onSalvarCheckIn,
+        ) { entrada ->
+            val checkIn = entrada.toRoute<CheckInDestination>()
+            CheckInRota(
+                // Pelo deep link o grupo não vem; o ViewModel usa o último grupo aberto.
+                viewModel = koinViewModel { parametersOf(checkIn.grupoId) },
                 onVoltar = { navController.popBackStack() },
-                bookTitle = "Leitura Atual",
-                errorMessage = checkInError,
+                // Ao voltar, o feed recarrega sozinho e mostra a leitura nova.
+                onSalvo = { navController.popBackStack() },
             )
         }
     }

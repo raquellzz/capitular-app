@@ -2,6 +2,7 @@ package br.imd.ufrn.di
 
 import br.imd.ufrn.BuildConfig
 import br.imd.ufrn.data.local.criarDataStore
+import br.imd.ufrn.data.remoto.CarregadorDeFotos
 import br.imd.ufrn.data.remoto.ProvedorDeToken
 import br.imd.ufrn.data.remoto.SessaoEmMemoria
 import br.imd.ufrn.data.remoto.criarClienteHttp
@@ -18,4 +19,5 @@ val dadosModule =
         single<HttpClientEngine> { OkHttp.create() }
         single { criarClienteHttp(engine = get(), baseUrl = BuildConfig.API_BASE_URL, provedorDeToken = get()) }
         single { criarDataStore(androidContext()) }
+        single { CarregadorDeFotos(get()) }
     }

@@ -29,5 +29,8 @@ data class GruposDestination(
     val grupoId: String,
 )
 
+/** Registrar leitura. [grupoId] é `null` quando se chega pelo deep link `capitular://check-in`. */
 @Serializable
-data object CheckInDestination
+data class CheckInDestination(
+    val grupoId: String? = null,
+)

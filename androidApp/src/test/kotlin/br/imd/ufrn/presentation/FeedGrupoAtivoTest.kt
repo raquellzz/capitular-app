@@ -29,9 +29,10 @@ class FeedGrupoAtivoTest {
                     userName = "Raquel",
                     nomeDoGrupo = "Clube do Torto Arado",
                     onAbrirGrupos = { abriuGrupos = true },
+                    estado = EstadoDaTela.Vazio,
                     onLogout = {},
-                    checkIns = emptyList(),
                     onNovoCheckInClick = {},
+                    onTentarDeNovo = {},
                 )
             }
         }
