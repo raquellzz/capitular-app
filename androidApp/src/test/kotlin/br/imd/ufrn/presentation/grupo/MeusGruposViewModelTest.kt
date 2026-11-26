@@ -63,7 +63,7 @@ class MeusGruposViewModelTest {
             viewModel.trocarPara(leituras)
             advanceUntilIdle()
 
-            assertEquals(DestinoDosGrupos.AbrirFeed("g2"), viewModel.destino.value)
+            assertEquals(DestinoDosGrupos.AbrirFeed(leituras), viewModel.destino.value)
             assertEquals("g2", preferencia.grupoId)
         }
 

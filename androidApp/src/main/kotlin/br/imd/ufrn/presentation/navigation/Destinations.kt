@@ -11,9 +11,11 @@ data object AuthDestination
 @Serializable
 data object GrupoDestination
 
+/** O nome vai na rota para o feed mostrar o grupo ativo na hora, mesmo sem rede. */
 @Serializable
 data class FeedDestination(
     val grupoId: String,
+    val grupoNome: String,
 )
 
 @Serializable

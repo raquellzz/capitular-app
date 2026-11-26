@@ -4,6 +4,9 @@ import android.app.Application
 import androidx.activity.ComponentActivity
 import br.imd.ufrn.presentation.theme.CapitularTheme
 import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.hasScrollAction
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
@@ -47,6 +50,8 @@ class CapitularUiTest {
             CapitularTheme {
                 FeedScreen(
                     userName = "Ana",
+                    nomeDoGrupo = "Clube do Livro",
+                    onAbrirGrupos = {},
                     onLogout = {},
                     checkIns = sampleCheckIns,
                     onNovoCheckInClick = {},
@@ -54,6 +59,8 @@ class CapitularUiTest {
             }
         }
 
+        // A lista rola: desce até o primeiro check-in, como o usuário faria.
+        rule.onNode(hasScrollAction()).performScrollToNode(hasText("Bia Nunes"))
         rule.onNodeWithText("Bia Nunes").assertExists()
         rule.onAllNodesWithText("Torto Arado")[0].assertExists()
     }
@@ -104,6 +111,8 @@ class CapitularUiTest {
             CapitularTheme {
                 FeedScreen(
                     userName = "Ana",
+                    nomeDoGrupo = "Clube do Livro",
+                    onAbrirGrupos = {},
                     onLogout = {},
                     checkIns = emptyList(),
                     onNovoCheckInClick = { clicked = true },
@@ -128,6 +137,8 @@ class CapitularUiTest {
             }
         }
 
+        // A lista rola: desce até o primeiro check-in, como o usuário faria.
+        rule.onNode(hasScrollAction()).performScrollToNode(hasText("Bia Nunes"))
         rule.onNodeWithText("Bia Nunes").assertExists()
         rule.onNodeWithText("340 pág.").assertExists()
         rule.onNodeWithText("Ana Lima").assertExists()

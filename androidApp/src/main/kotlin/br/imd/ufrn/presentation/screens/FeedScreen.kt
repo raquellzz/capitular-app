@@ -29,6 +29,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -43,6 +48,8 @@ import br.imd.ufrn.presentation.model.CheckIn
 @Composable
 fun FeedScreen(
     userName: String,
+    nomeDoGrupo: String,
+    onAbrirGrupos: () -> Unit,
     onLogout: () -> Unit,
     checkIns: List<CheckIn>,
     onNovoCheckInClick: () -> Unit,
@@ -63,12 +70,14 @@ fun FeedScreen(
                 FeedHeader(userName = userName, onLogout = onLogout)
             }
             item {
+                GrupoAtivo(nome = nomeDoGrupo, onClick = onAbrirGrupos)
+            }
+            item {
                 WeeklySummary()
             }
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.Bottom,
                 ) {
                     Column {
@@ -86,12 +95,6 @@ fun FeedScreen(
                             modifier = Modifier.semantics { heading() },
                         )
                     }
-                    Text(
-                        text = "${checkIns.size + 10} membros",
-                        color = MaterialTheme.colorScheme.tertiary,
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.Bold,
-                    )
                 }
             }
 
@@ -199,6 +202,49 @@ private fun FeedHeader(
     }
 }
 
+/** Mostra qual grupo está ativo; tocar abre a aba Grupos (trocar, convidar, ver membros). */
+@Composable
+private fun GrupoAtivo(
+    nome: String,
+    onClick: () -> Unit,
+) {
+    Surface(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(18.dp))
+                .clickable(onClickLabel = "Ver ou trocar de grupo", role = Role.Button, onClick = onClick),
+        shape = RoundedCornerShape(18.dp),
+        color = MaterialTheme.colorScheme.secondaryContainer,
+        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Text("👥", fontSize = 22.sp, modifier = Modifier.clearAndSetSemantics {})
+            Column(Modifier.weight(1f)) {
+                Text(
+                    text = "GRUPO ATIVO",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.1.sp,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f),
+                )
+                Text(
+                    text = nome,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Black,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            Text("Trocar ›", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelLarge)
+        }
+    }
+}
+
 @Composable
 private fun WeeklySummary() {
     Surface(
@@ -284,6 +330,8 @@ private fun FeedScreenFilledPreview() {
     CapitularTheme {
         FeedScreen(
             userName = "Ana Lima",
+            nomeDoGrupo = "Clube do Torto Arado",
+            onAbrirGrupos = {},
             onLogout = {},
             checkIns = sampleCheckIns,
             onNovoCheckInClick = {},

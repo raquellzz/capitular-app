@@ -44,7 +44,7 @@ import br.imd.ufrn.presentation.theme.CapitularTheme
 @Composable
 fun GrupoRota(
     viewModel: GrupoViewModel,
-    onGrupoPronto: (grupoId: String) -> Unit,
+    onGrupoPronto: (Grupo) -> Unit,
     onSair: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -53,7 +53,7 @@ fun GrupoRota(
 
     val grupoPronto = (estado as? EstadoDaTela.Sucesso)?.dados
     LaunchedEffect(grupoPronto?.id) {
-        grupoPronto?.let { onGrupoPronto(it.id) }
+        grupoPronto?.let { onGrupoPronto(it) }
     }
 
     GrupoScreen(

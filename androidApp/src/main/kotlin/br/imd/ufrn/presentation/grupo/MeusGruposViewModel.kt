@@ -25,7 +25,7 @@ data class MeusGrupos(
 /** Para onde a aba Grupos manda o usuário depois de uma ação. */
 sealed interface DestinoDosGrupos {
     data class AbrirFeed(
-        val grupoId: String,
+        val grupo: Grupo,
     ) : DestinoDosGrupos
 
     /** Saiu do único grupo: volta para a tela de criar ou entrar. */
@@ -56,7 +56,7 @@ class MeusGruposViewModel(
     val destino: StateFlow<DestinoDosGrupos?> = _destino.asStateFlow()
 
     val acoes =
-        AcoesDoFormularioDeGrupo(repositorio, viewModelScope) { grupo -> abrir(grupo.id) }
+        AcoesDoFormularioDeGrupo(repositorio, viewModelScope) { grupo -> abrir(grupo) }
     val formulario: StateFlow<FormularioDeGrupo> = acoes.formulario
 
     init {
@@ -88,7 +88,7 @@ class MeusGruposViewModel(
     }
 
     fun trocarPara(grupo: Grupo) {
-        viewModelScope.launch { abrir(grupo.id) }
+        viewModelScope.launch { abrir(grupo) }
     }
 
     fun sairDoGrupo() {
@@ -101,7 +101,7 @@ class MeusGruposViewModel(
                 repositorio.sair(grupos.atual.id)
                 val proximo = grupos.outros.firstOrNull()
                 if (proximo != null) {
-                    abrir(proximo.id)
+                    abrir(proximo)
                 } else {
                     preferencia.salvarGrupoAtual(null)
                     _destino.value = DestinoDosGrupos.EscolherGrupo
@@ -122,8 +122,8 @@ class MeusGruposViewModel(
         _destino.value = null
     }
 
-    private suspend fun abrir(grupoId: String) {
-        preferencia.salvarGrupoAtual(grupoId)
-        _destino.value = DestinoDosGrupos.AbrirFeed(grupoId)
+    private suspend fun abrir(grupo: Grupo) {
+        preferencia.salvarGrupoAtual(grupo.id)
+        _destino.value = DestinoDosGrupos.AbrirFeed(grupo)
     }
 }

@@ -58,7 +58,7 @@ import br.imd.ufrn.presentation.theme.CapitularTheme
 @Composable
 fun MeusGruposRota(
     viewModel: MeusGruposViewModel,
-    onAbrirFeed: (grupoId: String) -> Unit,
+    onAbrirFeed: (Grupo) -> Unit,
     onEscolherGrupo: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -72,7 +72,7 @@ fun MeusGruposRota(
     LaunchedEffect(destino) {
         when (val atual = destino) {
             null -> return@LaunchedEffect
-            is DestinoDosGrupos.AbrirFeed -> onAbrirFeed(atual.grupoId)
+            is DestinoDosGrupos.AbrirFeed -> onAbrirFeed(atual.grupo)
             DestinoDosGrupos.EscolherGrupo -> onEscolherGrupo()
         }
         viewModel.navegacaoConcluida()

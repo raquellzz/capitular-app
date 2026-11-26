@@ -50,9 +50,10 @@ fun CapitularNavHost(
             launchSingleTop = true
         }
 
-    fun voltarAoFeed(grupoId: String) {
+    // Sem o feed na pilha (não deveria acontecer), refaz a escolha do grupo.
+    fun voltarAoFeed() {
         if (!navController.popBackStack<FeedDestination>(inclusive = false)) {
-            navController.navigate(FeedDestination(grupoId)) { launchSingleTop = true }
+            navController.navigate(GrupoDestination) { launchSingleTop = true }
         }
     }
 
@@ -77,8 +78,8 @@ fun CapitularNavHost(
         composable<GrupoDestination> {
             GrupoRota(
                 viewModel = koinViewModel(),
-                onGrupoPronto = { grupoId ->
-                    navController.navigate(FeedDestination(grupoId)) {
+                onGrupoPronto = { grupo ->
+                    navController.navigate(FeedDestination(grupo.id, grupo.nome)) {
                         popUpTo<GrupoDestination> { inclusive = true }
                         launchSingleTop = true
                     }
@@ -103,6 +104,8 @@ fun CapitularNavHost(
             ) { contentModifier ->
                 FeedScreen(
                     userName = session?.user?.displayName ?: "Leitor",
+                    nomeDoGrupo = feed.grupoNome,
+                    onAbrirGrupos = { abrirAba(GruposDestination(feed.grupoId)) },
                     onLogout = {
                         onLogout()
                         navController.navigate(AuthDestination) {
@@ -121,7 +124,7 @@ fun CapitularNavHost(
             val ranking = entrada.toRoute<RankingDestination>()
             AdaptiveMainScaffold(
                 selectedDestination = MainDestination.RANKING,
-                onFeedClick = { voltarAoFeed(ranking.grupoId) },
+                onFeedClick = { voltarAoFeed() },
                 onRankingClick = {},
                 onGruposClick = { abrirAba(GruposDestination(ranking.grupoId)) },
             ) { contentModifier ->
@@ -136,14 +139,14 @@ fun CapitularNavHost(
             val grupos = entrada.toRoute<GruposDestination>()
             AdaptiveMainScaffold(
                 selectedDestination = MainDestination.GRUPOS,
-                onFeedClick = { voltarAoFeed(grupos.grupoId) },
+                onFeedClick = { voltarAoFeed() },
                 onRankingClick = { abrirAba(RankingDestination(grupos.grupoId)) },
                 onGruposClick = {},
             ) { contentModifier ->
                 MeusGruposRota(
                     viewModel = koinViewModel { parametersOf(grupos.grupoId) },
-                    onAbrirFeed = { grupoId ->
-                        navController.navigate(FeedDestination(grupoId)) {
+                    onAbrirFeed = { grupo ->
+                        navController.navigate(FeedDestination(grupo.id, grupo.nome)) {
                             popUpTo<FeedDestination> { inclusive = true }
                             launchSingleTop = true
                         }
