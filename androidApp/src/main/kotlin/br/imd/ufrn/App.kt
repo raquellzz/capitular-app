@@ -13,14 +13,16 @@ import br.imd.ufrn.auth.AuthApi
 import br.imd.ufrn.auth.AuthFormState
 import br.imd.ufrn.auth.AuthMode
 import br.imd.ufrn.auth.AuthSessionViewModel
-import br.imd.ufrn.navigation.AuthDestination
-import br.imd.ufrn.navigation.CapitularNavHost
-import br.imd.ufrn.navigation.FeedDestination
-import br.imd.ufrn.ui.CapitularTheme
-import br.imd.ufrn.ui.models.CheckIn
-import br.imd.ufrn.ui.models.Ranking
+import br.imd.ufrn.data.remoto.SessaoEmMemoria
+import br.imd.ufrn.presentation.navigation.AuthDestination
+import br.imd.ufrn.presentation.navigation.CapitularNavHost
+import br.imd.ufrn.presentation.navigation.GrupoDestination
+import br.imd.ufrn.presentation.theme.CapitularTheme
+import br.imd.ufrn.presentation.model.CheckIn
+import br.imd.ufrn.presentation.model.Ranking
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
+import org.koin.compose.koinInject
 
 @Composable
 fun App() {
@@ -29,6 +31,7 @@ fun App() {
         val scope = rememberCoroutineScope()
         val authApi = remember { AuthApi() }
         val authSessionViewModel = viewModel<AuthSessionViewModel>()
+        val sessaoEmMemoria = koinInject<SessaoEmMemoria>()
         var authForm by remember { mutableStateOf(AuthFormState()) }
         val session = authSessionViewModel.session
         var paginaInicial by remember { mutableStateOf("") }
@@ -99,8 +102,9 @@ fun App() {
                                     )
                             }
                         authSessionViewModel.authenticate(authenticatedSession)
+                        sessaoEmMemoria.token = authenticatedSession.tokens.accessToken
                         authForm = AuthFormState()
-                        navController.navigate(FeedDestination) {
+                        navController.navigate(GrupoDestination) {
                             popUpTo<AuthDestination> { inclusive = true }
                             launchSingleTop = true
                         }
@@ -139,6 +143,7 @@ fun App() {
             onLogout = {
                 val activeSession = session
                 authSessionViewModel.clearSession()
+                sessaoEmMemoria.token = null
                 authForm = AuthFormState()
                 if (activeSession != null) {
                     scope.launch {

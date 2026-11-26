@@ -18,8 +18,8 @@ import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
-// 10.0.2.2 encaminha o tráfego do Android Emulator para o localhost do Mac.
-fun defaultApiBaseUrl(): String = "http://10.0.2.2:8000"
+// Definido em androidApp/build.gradle.kts (padrão: 10.0.2.2:8000, o localhost visto pelo emulador).
+fun defaultApiBaseUrl(): String = br.imd.ufrn.BuildConfig.API_BASE_URL
 
 class AuthApi(
     private val baseUrl: String = defaultApiBaseUrl(),
