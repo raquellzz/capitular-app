@@ -1,17 +1,19 @@
-package br.imd.ufrn.ui
+package br.imd.ufrn.presentation
 
+import android.app.Application
 import androidx.activity.ComponentActivity
+import br.imd.ufrn.presentation.theme.CapitularTheme
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import br.imd.ufrn.ui.models.CheckIn
-import br.imd.ufrn.ui.models.Ranking
-import br.imd.ufrn.ui.screens.CheckInScreen
-import br.imd.ufrn.ui.screens.FeedScreen
-import br.imd.ufrn.ui.screens.RankingScreen
+import br.imd.ufrn.presentation.model.CheckIn
+import br.imd.ufrn.presentation.model.Ranking
+import br.imd.ufrn.presentation.screens.CheckInScreen
+import br.imd.ufrn.presentation.screens.FeedScreen
+import br.imd.ufrn.presentation.screens.RankingScreen
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -20,7 +22,8 @@ import org.robolectric.annotation.Config
 import kotlin.test.assertTrue
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35], manifest = Config.NONE)
+// Application simples: as telas recebem estado e lambdas, sem Koin.
+@Config(sdk = [35], manifest = Config.NONE, application = Application::class)
 class CapitularUiTest {
 
     @get:Rule

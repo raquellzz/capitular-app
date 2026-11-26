@@ -1,4 +1,4 @@
-package br.imd.ufrn.ui.screens
+package br.imd.ufrn.presentation.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -34,7 +34,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import br.imd.ufrn.ui.CapitularTheme
+import br.imd.ufrn.presentation.theme.CapitularTheme
 
 fun isFormularioValido(pagInicio: String, pagFim: String): Boolean {
     if (pagInicio.isBlank() || pagFim.isBlank()) return false

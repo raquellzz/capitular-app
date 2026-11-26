@@ -1,4 +1,4 @@
-package br.imd.ufrn.navigation
+package br.imd.ufrn.presentation.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
@@ -8,12 +8,12 @@ import androidx.navigation.navDeepLink
 import br.imd.ufrn.auth.AuthFormState
 import br.imd.ufrn.auth.AuthMode
 import br.imd.ufrn.auth.AuthSession
-import br.imd.ufrn.ui.AuthScreen
-import br.imd.ufrn.ui.models.CheckIn
-import br.imd.ufrn.ui.models.Ranking
-import br.imd.ufrn.ui.screens.CheckInScreen
-import br.imd.ufrn.ui.screens.FeedScreen
-import br.imd.ufrn.ui.screens.RankingScreen
+import br.imd.ufrn.presentation.screens.AuthScreen
+import br.imd.ufrn.presentation.model.CheckIn
+import br.imd.ufrn.presentation.model.Ranking
+import br.imd.ufrn.presentation.screens.CheckInScreen
+import br.imd.ufrn.presentation.screens.FeedScreen
+import br.imd.ufrn.presentation.screens.RankingScreen
 
 @Composable
 fun CapitularNavHost(
