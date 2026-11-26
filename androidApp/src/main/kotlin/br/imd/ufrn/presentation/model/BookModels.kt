@@ -1,4 +1,4 @@
-package br.imd.ufrn.ui.models
+package br.imd.ufrn.presentation.model
 
 data class CheckIn(
     val id: String = "",

@@ -1,4 +1,4 @@
-package br.imd.ufrn.ui.components
+package br.imd.ufrn.presentation.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -31,7 +31,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import br.imd.ufrn.ui.CapitularTheme
+import br.imd.ufrn.presentation.theme.CapitularTheme
 
 @Composable
 fun CheckInCard(

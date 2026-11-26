@@ -1,4 +1,4 @@
-package br.imd.ufrn.ui
+package br.imd.ufrn.presentation.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.Image
@@ -41,6 +41,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import br.imd.ufrn.R
+import br.imd.ufrn.presentation.theme.CapitularLavender
+import br.imd.ufrn.presentation.theme.CapitularTheme
 import br.imd.ufrn.auth.AuthFormState
 import br.imd.ufrn.auth.AuthMode
 

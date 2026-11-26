@@ -1,4 +1,4 @@
-package br.imd.ufrn.navigation
+package br.imd.ufrn.presentation.navigation
 
 import kotlinx.serialization.Serializable
 

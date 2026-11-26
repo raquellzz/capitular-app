@@ -1,4 +1,4 @@
-package br.imd.ufrn.ui.screens
+package br.imd.ufrn.presentation.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -35,10 +35,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import br.imd.ufrn.R
-import br.imd.ufrn.ui.CapitularTheme
-import br.imd.ufrn.ui.components.CheckInCard
-import br.imd.ufrn.ui.components.RankingItem
-import br.imd.ufrn.ui.models.CheckIn
+import br.imd.ufrn.presentation.theme.CapitularTheme
+import br.imd.ufrn.presentation.components.CheckInCard
+import br.imd.ufrn.presentation.components.RankingItem
+import br.imd.ufrn.presentation.model.CheckIn
 
 @Composable
 fun FeedScreen(
