@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -17,16 +16,10 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -38,8 +31,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -68,10 +59,7 @@ fun GrupoRota(
     GrupoScreen(
         estado = estado,
         formulario = formulario,
-        onNomeChange = viewModel::alterarNome,
-        onCodigoChange = viewModel::alterarCodigo,
-        onCriar = viewModel::criarGrupo,
-        onEntrar = viewModel::entrarNoGrupo,
+        eventos = viewModel.acoes.eventos(),
         onTentarDeNovo = viewModel::carregar,
         onSair = onSair,
         modifier = modifier,
@@ -82,10 +70,7 @@ fun GrupoRota(
 fun GrupoScreen(
     estado: EstadoDaTela<Grupo>,
     formulario: FormularioDeGrupo,
-    onNomeChange: (String) -> Unit,
-    onCodigoChange: (String) -> Unit,
-    onCriar: () -> Unit,
-    onEntrar: () -> Unit,
+    eventos: EventosDoFormularioDeGrupo,
     onTentarDeNovo: () -> Unit,
     onSair: () -> Unit,
     modifier: Modifier = Modifier,
@@ -105,10 +90,7 @@ fun GrupoScreen(
             EstadoDaTela.Vazio ->
                 EscolherGrupo(
                     formulario = formulario,
-                    onNomeChange = onNomeChange,
-                    onCodigoChange = onCodigoChange,
-                    onCriar = onCriar,
-                    onEntrar = onEntrar,
+                    eventos = eventos,
                     onSair = onSair,
                 )
             is EstadoDaTela.Erro ->
@@ -163,10 +145,7 @@ private fun ErroAoCarregar(
 @Composable
 private fun EscolherGrupo(
     formulario: FormularioDeGrupo,
-    onNomeChange: (String) -> Unit,
-    onCodigoChange: (String) -> Unit,
-    onCriar: () -> Unit,
-    onEntrar: () -> Unit,
+    eventos: EventosDoFormularioDeGrupo,
     onSair: () -> Unit,
 ) {
     Column(
@@ -208,81 +187,7 @@ private fun EscolherGrupo(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
-        formulario.erro?.let { erro ->
-            Surface(
-                color = MaterialTheme.colorScheme.errorContainer,
-                contentColor = MaterialTheme.colorScheme.onErrorContainer,
-                shape = RoundedCornerShape(12.dp),
-            ) {
-                Text(text = erro, modifier = Modifier.fillMaxWidth().padding(12.dp))
-            }
-        }
-
-        CartaoDeAcao(titulo = "Criar um grupo") {
-            OutlinedTextField(
-                value = formulario.nome,
-                onValueChange = onNomeChange,
-                label = { Text("Nome do grupo") },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !formulario.enviando,
-                singleLine = true,
-                keyboardOptions =
-                    KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, imeAction = ImeAction.Done),
-                shape = RoundedCornerShape(12.dp),
-            )
-            Button(
-                onClick = onCriar,
-                enabled = formulario.podeCriar,
-                modifier = Modifier.fillMaxWidth().height(50.dp),
-                shape = RoundedCornerShape(14.dp),
-            ) { Text("Criar grupo", fontWeight = FontWeight.Bold) }
-        }
-
-        CartaoDeAcao(titulo = "Entrar com convite") {
-            OutlinedTextField(
-                value = formulario.codigo,
-                onValueChange = onCodigoChange,
-                label = { Text("Código de convite") },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !formulario.enviando,
-                singleLine = true,
-                keyboardOptions =
-                    KeyboardOptions(capitalization = KeyboardCapitalization.Characters, imeAction = ImeAction.Done),
-                shape = RoundedCornerShape(12.dp),
-            )
-            OutlinedButton(
-                onClick = onEntrar,
-                enabled = formulario.podeEntrar,
-                modifier = Modifier.fillMaxWidth().height(50.dp),
-                shape = RoundedCornerShape(14.dp),
-            ) { Text("Entrar no grupo", fontWeight = FontWeight.Bold) }
-        }
-    }
-}
-
-@Composable
-private fun CartaoDeAcao(
-    titulo: String,
-    conteudo: @Composable () -> Unit,
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-    ) {
-        Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Text(
-                text = titulo,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Black,
-                modifier = Modifier.semantics { heading() },
-            )
-            conteudo()
-        }
+        FormulariosDeGrupo(formulario = formulario, eventos = eventos)
     }
 }
 
@@ -292,11 +197,8 @@ private fun GrupoVazioPreview() {
     CapitularTheme {
         GrupoScreen(
             estado = EstadoDaTela.Vazio,
-            formulario = FormularioDeGrupo(nome = "Clube do Torto Arado"),
-            onNomeChange = {},
-            onCodigoChange = {},
-            onCriar = {},
-            onEntrar = {},
+            formulario = FormularioDeGrupo(nome = "Clube do Torto Arado", descricao = "Um capítulo por dia."),
+            eventos = EventosDoFormularioDeGrupo(),
             onTentarDeNovo = {},
             onSair = {},
         )
@@ -310,10 +212,7 @@ private fun GrupoErroPreview() {
         GrupoScreen(
             estado = EstadoDaTela.Erro("Sem conexão com o Capitular. Verifique sua internet e tente de novo."),
             formulario = FormularioDeGrupo(),
-            onNomeChange = {},
-            onCodigoChange = {},
-            onCriar = {},
-            onEntrar = {},
+            eventos = EventosDoFormularioDeGrupo(),
             onTentarDeNovo = {},
             onSair = {},
         )

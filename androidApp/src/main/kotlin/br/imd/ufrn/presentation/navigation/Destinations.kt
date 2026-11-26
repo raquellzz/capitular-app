@@ -21,5 +21,11 @@ data class RankingDestination(
     val grupoId: String,
 )
 
+/** Aba "Grupos": detalhes do grupo atual e os demais grupos do usuário. */
+@Serializable
+data class GruposDestination(
+    val grupoId: String,
+)
+
 @Serializable
 data object CheckInDestination

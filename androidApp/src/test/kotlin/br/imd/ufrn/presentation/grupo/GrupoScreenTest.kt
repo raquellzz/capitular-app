@@ -32,10 +32,7 @@ class GrupoScreenTest {
             GrupoScreen(
                 estado = estado,
                 formulario = formulario,
-                onNomeChange = {},
-                onCodigoChange = {},
-                onCriar = {},
-                onEntrar = {},
+                eventos = EventosDoFormularioDeGrupo(),
                 onTentarDeNovo = onTentarDeNovo,
                 onSair = {},
             )
@@ -55,6 +52,13 @@ class GrupoScreenTest {
         mostrar(EstadoDaTela.Vazio, FormularioDeGrupo(nome = "Clube do Livro"))
 
         rule.onNodeWithText("Criar grupo").assertIsEnabled()
+    }
+
+    @Test
+    fun descricaoLongaDesabilitaCriar() {
+        mostrar(EstadoDaTela.Vazio, FormularioDeGrupo(nome = "Clube do Livro", descricao = "a".repeat(301)))
+
+        rule.onNodeWithText("Criar grupo").assertIsNotEnabled()
     }
 
     @Test

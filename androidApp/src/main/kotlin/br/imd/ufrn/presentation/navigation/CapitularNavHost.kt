@@ -16,6 +16,8 @@ import br.imd.ufrn.presentation.screens.CheckInScreen
 import br.imd.ufrn.presentation.screens.FeedScreen
 import br.imd.ufrn.presentation.screens.RankingScreen
 import br.imd.ufrn.presentation.grupo.GrupoRota
+import br.imd.ufrn.presentation.grupo.MeusGruposRota
+import org.koin.core.parameter.parametersOf
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -41,6 +43,19 @@ fun CapitularNavHost(
     onPaginaFinalChange: (String) -> Unit,
     onSalvarCheckIn: (inicio: String, fim: String) -> Unit,
 ) {
+    // Abas (Feed, Ranking, Grupos): a pilha fica sempre Feed -> aba, sem crescer.
+    fun abrirAba(destino: Any) =
+        navController.navigate(destino) {
+            popUpTo<FeedDestination>()
+            launchSingleTop = true
+        }
+
+    fun voltarAoFeed(grupoId: String) {
+        if (!navController.popBackStack<FeedDestination>(inclusive = false)) {
+            navController.navigate(FeedDestination(grupoId)) { launchSingleTop = true }
+        }
+    }
+
     NavHost(
         navController = navController,
         startDestination = AuthDestination,
@@ -83,11 +98,8 @@ fun CapitularNavHost(
             AdaptiveMainScaffold(
                 selectedDestination = MainDestination.FEED,
                 onFeedClick = {},
-                onRankingClick = {
-                    navController.navigate(RankingDestination(feed.grupoId)) {
-                        launchSingleTop = true
-                    }
-                },
+                onRankingClick = { abrirAba(RankingDestination(feed.grupoId)) },
+                onGruposClick = { abrirAba(GruposDestination(feed.grupoId)) },
             ) { contentModifier ->
                 FeedScreen(
                     userName = session?.user?.displayName ?: "Leitor",
@@ -109,17 +121,38 @@ fun CapitularNavHost(
             val ranking = entrada.toRoute<RankingDestination>()
             AdaptiveMainScaffold(
                 selectedDestination = MainDestination.RANKING,
-                onFeedClick = {
-                    if (!navController.popBackStack<FeedDestination>(inclusive = false)) {
-                        navController.navigate(FeedDestination(ranking.grupoId)) {
-                            launchSingleTop = true
-                        }
-                    }
-                },
+                onFeedClick = { voltarAoFeed(ranking.grupoId) },
                 onRankingClick = {},
+                onGruposClick = { abrirAba(GruposDestination(ranking.grupoId)) },
             ) { contentModifier ->
                 RankingScreen(
                     rankings = rankings,
+                    modifier = contentModifier,
+                )
+            }
+        }
+
+        composable<GruposDestination> { entrada ->
+            val grupos = entrada.toRoute<GruposDestination>()
+            AdaptiveMainScaffold(
+                selectedDestination = MainDestination.GRUPOS,
+                onFeedClick = { voltarAoFeed(grupos.grupoId) },
+                onRankingClick = { abrirAba(RankingDestination(grupos.grupoId)) },
+                onGruposClick = {},
+            ) { contentModifier ->
+                MeusGruposRota(
+                    viewModel = koinViewModel { parametersOf(grupos.grupoId) },
+                    onAbrirFeed = { grupoId ->
+                        navController.navigate(FeedDestination(grupoId)) {
+                            popUpTo<FeedDestination> { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    },
+                    onEscolherGrupo = {
+                        navController.navigate(GrupoDestination) {
+                            popUpTo<FeedDestination> { inclusive = true }
+                        }
+                    },
                     modifier = contentModifier,
                 )
             }

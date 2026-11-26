@@ -24,6 +24,7 @@ import androidx.window.core.layout.WindowSizeClass.Companion.WIDTH_DP_MEDIUM_LOW
 enum class MainDestination {
     FEED,
     RANKING,
+    GRUPOS,
 }
 
 @Composable
@@ -31,6 +32,7 @@ fun AdaptiveMainScaffold(
     selectedDestination: MainDestination,
     onFeedClick: () -> Unit,
     onRankingClick: () -> Unit,
+    onGruposClick: () -> Unit,
     modifier: Modifier = Modifier,
     content: @Composable (Modifier) -> Unit,
 ) {
@@ -58,6 +60,12 @@ fun AdaptiveMainScaffold(
                     selected = selectedDestination == MainDestination.RANKING,
                     onClick = onRankingClick,
                 )
+                MainNavigationRailItem(
+                    icon = "👥",
+                    label = "Grupos",
+                    selected = selectedDestination == MainDestination.GRUPOS,
+                    onClick = onGruposClick,
+                )
             }
             Box(modifier = Modifier.weight(1f)) {
                 content(Modifier.fillMaxSize())
@@ -79,6 +87,12 @@ fun AdaptiveMainScaffold(
                         label = "Ranking",
                         selected = selectedDestination == MainDestination.RANKING,
                         onClick = onRankingClick,
+                    )
+                    MainNavigationBarItem(
+                        icon = "👥",
+                        label = "Grupos",
+                        selected = selectedDestination == MainDestination.GRUPOS,
+                        onClick = onGruposClick,
                     )
                 }
             },

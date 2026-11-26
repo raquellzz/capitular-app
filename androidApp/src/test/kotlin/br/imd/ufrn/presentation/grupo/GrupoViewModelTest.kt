@@ -3,11 +3,9 @@ package br.imd.ufrn.presentation.grupo
 import app.cash.turbine.test
 import br.imd.ufrn.domain.FalhaNoRepositorio
 import br.imd.ufrn.domain.grupo.Grupo
-import br.imd.ufrn.domain.grupo.GrupoRepository
 import br.imd.ufrn.presentation.EstadoDaTela
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -20,41 +18,16 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
 
-/** Dublê com demora em tempo virtual e respostas configuráveis. */
-private class GrupoRepositoryFalso : GrupoRepository {
-    var grupos: List<Grupo> = emptyList()
-    var falha: FalhaNoRepositorio? = null
-    var falhaAoEntrar: FalhaNoRepositorio? = null
-
-    override suspend fun meusGrupos(): List<Grupo> {
-        delay(100)
-        falha?.let { throw it }
-        return grupos
-    }
-
-    override suspend fun criar(
-        nome: String,
-        descricao: String?,
-    ): Grupo {
-        delay(100)
-        return Grupo("novo", nome, descricao, "NOVO2345", 1)
-    }
-
-    override suspend fun entrar(codigoConvite: String): Grupo {
-        delay(100)
-        falhaAoEntrar?.let { throw it }
-        return Grupo("g2", "Grupo do convite", null, codigoConvite, 4)
-    }
-}
-
 @OptIn(ExperimentalCoroutinesApi::class)
 class GrupoViewModelTest {
     private val clube = Grupo("g1", "Clube", null, "ABCD2345", 3)
+    private val leituras = Grupo("g2", "Leituras", null, "QWER5678", 5)
     private val repositorio = GrupoRepositoryFalso()
+    private val preferencia = PreferenciaDeGrupoFalsa()
 
     private fun TestScope.criarViewModel(): GrupoViewModel {
         Dispatchers.setMain(StandardTestDispatcher(testScheduler))
-        return GrupoViewModel(repositorio)
+        return GrupoViewModel(repositorio, preferencia)
     }
 
     @AfterTest
@@ -70,6 +43,17 @@ class GrupoViewModelTest {
                 assertEquals(EstadoDaTela.Carregando, awaitItem())
                 assertEquals(EstadoDaTela.Sucesso(clube), awaitItem())
             }
+        }
+
+    @Test
+    fun reabreOUltimoGrupoAberto() =
+        runTest {
+            repositorio.grupos = listOf(clube, leituras)
+            preferencia.grupoId = leituras.id
+            val viewModel = criarViewModel()
+            advanceUntilIdle()
+
+            assertEquals(EstadoDaTela.Sucesso(leituras), viewModel.estado.value)
         }
 
     @Test
@@ -103,17 +87,20 @@ class GrupoViewModelTest {
         }
 
     @Test
-    fun criarGrupoLevaAoSucesso() =
+    fun criarGrupoComDescricaoLevaAoSucessoEGuardaOGrupo() =
         runTest {
             val viewModel = criarViewModel()
             advanceUntilIdle()
 
-            viewModel.alterarNome("Leitoras da UFRN")
-            viewModel.criarGrupo()
+            viewModel.acoes.alterarNome("Leitoras da UFRN")
+            viewModel.acoes.alterarDescricao("Um capítulo por dia")
+            viewModel.acoes.criar()
             advanceUntilIdle()
 
             val estado = assertIs<EstadoDaTela.Sucesso<Grupo>>(viewModel.estado.value)
             assertEquals("Leitoras da UFRN", estado.dados.nome)
+            assertEquals("Leitoras da UFRN" to "Um capítulo por dia", repositorio.ultimoCriado)
+            assertEquals("novo", preferencia.grupoId)
         }
 
     @Test
@@ -123,8 +110,8 @@ class GrupoViewModelTest {
             val viewModel = criarViewModel()
             advanceUntilIdle()
 
-            viewModel.alterarCodigo("ZZZZ9999")
-            viewModel.entrarNoGrupo()
+            viewModel.acoes.alterarCodigo("ZZZZ9999")
+            viewModel.acoes.entrar()
             advanceUntilIdle()
 
             val formulario = viewModel.formulario.value
