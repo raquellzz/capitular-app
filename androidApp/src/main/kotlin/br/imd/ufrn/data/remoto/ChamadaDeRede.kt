@@ -7,6 +7,7 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.ContentConvertException
 import kotlinx.coroutines.CancellationException
 import java.io.IOException
+import java.time.format.DateTimeParseException
 import kotlinx.serialization.SerializationException
 
 /**
@@ -39,6 +40,9 @@ suspend fun <T> chamadaDeRede(bloco: suspend () -> T): T =
     } catch (erro: NoTransformationFoundException) {
         throw FalhaNoRepositorio.RespostaInvalida(causa = erro)
     } catch (erro: SerializationException) {
+        throw FalhaNoRepositorio.RespostaInvalida(causa = erro)
+    } catch (erro: DateTimeParseException) {
+        // Data fora do formato ISO-8601 na resposta.
         throw FalhaNoRepositorio.RespostaInvalida(causa = erro)
     } catch (erro: IOException) {
         // Inclui sem rede, host desconhecido, conexão recusada e tempo esgotado.
