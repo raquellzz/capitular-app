@@ -4,7 +4,13 @@ Aplicativo Android de leitura social desenvolvido com Kotlin e Jetpack Compose.
 
 ## Estrutura
 
-- `androidApp/src/main/kotlin`: aplicação, telas, autenticação e integração com a API.
+- `androidApp/src/main/kotlin/br/imd/ufrn`, em camadas:
+  - `domain`: entidades, interfaces dos repositórios e falhas (`FalhaNoRepositorio`). Não importa Android, Compose, Ktor, DataStore nem Koin.
+  - `data`: implementações dos repositórios: `remoto` (Ktor, DTOs, `chamadaDeRede`) e `local` (DataStore).
+  - `presentation`: telas, componentes, tema, navegação, ViewModels e `EstadoDaTela`.
+  - `di`: módulos do Koin (`dadosModule`, `feedModule`, `authModule`).
+  - `auth`: autenticação da Sprint 1, a ser dividida entre as camadas.
+- Endereço do backend: `BuildConfig.API_BASE_URL`, padrão `http://10.0.2.2:8000` (emulador). Em aparelho físico: `./gradlew installDebug -Pcapitular.apiUrl=http://IP_DA_MAQUINA:8000`.
 - `androidApp/src/main/res`: manifestos e recursos Android.
 - `androidApp/src/test`: testes unitários locais e de interface (`CapitularUiTest.kt`).
 - `docs`: documentação do produto.
