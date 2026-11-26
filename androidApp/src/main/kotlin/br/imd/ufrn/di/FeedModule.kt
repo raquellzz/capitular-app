@@ -1,6 +1,10 @@
 package br.imd.ufrn.di
 
 import br.imd.ufrn.BuildConfig
+import br.imd.ufrn.data.local.CacheLocal
+import br.imd.ufrn.data.local.EstatisticasRepositoryComCache
+import br.imd.ufrn.data.local.FeedRepositoryComCache
+import br.imd.ufrn.data.local.GrupoRepositoryComCache
 import br.imd.ufrn.data.local.PreferenciaDeGrupoLocal
 import br.imd.ufrn.data.remoto.feed.EstatisticasRepositoryRemoto
 import br.imd.ufrn.data.remoto.feed.FeedRepositoryRemoto
@@ -20,10 +24,13 @@ import org.koin.dsl.module
 /** Frente A (Raquel): grupo atual, feed e check-in. */
 val feedModule =
     module {
-        single<GrupoRepository> { GrupoRepositoryRemoto(get()) }
+        // Cada repositório remoto é envolvido pelo seu cache (Decorator): com conexão
+        // guarda as respostas; sem conexão, devolve a última cópia do aparelho.
+        single { CacheLocal(get()) }
+        single<GrupoRepository> { GrupoRepositoryComCache(GrupoRepositoryRemoto(get()), get()) }
         single<PreferenciaDeGrupo> { PreferenciaDeGrupoLocal(get()) }
-        single<FeedRepository> { FeedRepositoryRemoto(get(), BuildConfig.API_BASE_URL) }
-        single<EstatisticasRepository> { EstatisticasRepositoryRemoto(get()) }
+        single<FeedRepository> { FeedRepositoryComCache(FeedRepositoryRemoto(get(), BuildConfig.API_BASE_URL), get()) }
+        single<EstatisticasRepository> { EstatisticasRepositoryComCache(EstatisticasRepositoryRemoto(get()), get()) }
         viewModelOf(::GrupoViewModel)
         viewModel { (grupoId: String) -> MeusGruposViewModel(grupoId, get(), get()) }
         viewModel { (grupoId: String) -> FeedViewModel(grupoId, get(), get()) }

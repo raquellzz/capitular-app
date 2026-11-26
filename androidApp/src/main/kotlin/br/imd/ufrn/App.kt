@@ -13,6 +13,7 @@ import br.imd.ufrn.auth.AuthApi
 import br.imd.ufrn.auth.AuthFormState
 import br.imd.ufrn.auth.AuthMode
 import br.imd.ufrn.auth.AuthSessionViewModel
+import br.imd.ufrn.data.local.CacheLocal
 import br.imd.ufrn.data.remoto.SessaoEmMemoria
 import br.imd.ufrn.presentation.navigation.AuthDestination
 import br.imd.ufrn.presentation.navigation.CapitularNavHost
@@ -34,6 +35,7 @@ fun App() {
         val authApi = remember { AuthApi() }
         val authSessionViewModel = viewModel<AuthSessionViewModel>()
         val sessaoEmMemoria = koinInject<SessaoEmMemoria>()
+        val cacheLocal = koinInject<CacheLocal>()
         var authForm by remember { mutableStateOf(AuthFormState()) }
         val session = authSessionViewModel.session
         // Ranking ainda fixo: vem do backend na issue de Auth e Ranking (Pablo).
@@ -116,6 +118,8 @@ fun App() {
                 authSessionViewModel.clearSession()
                 sessaoEmMemoria.token = null
                 authForm = AuthFormState()
+                // A cópia local é da conta que saiu: apaga para a próxima não ver.
+                scope.launch { cacheLocal.limparTudo() }
                 if (activeSession != null) {
                     scope.launch {
                         authApi.logout(activeSession.tokens.refreshToken)

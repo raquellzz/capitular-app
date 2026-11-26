@@ -91,6 +91,31 @@ class CapitularUiTest {
     }
 
     @Test
+    fun feedSemConexaoMostraAvisoDeDadosSalvos() {
+        rule.setContent {
+            CapitularTheme {
+                FeedScreen(
+                    userName = "Ana",
+                    nomeDoGrupo = "Clube do Livro",
+                    estado =
+                        EstadoDaTela.Sucesso(
+                            listOf(CheckIn(id = "1", friendName = "Bia", bookTitle = "Torto Arado", pageRange = "pág. 1", timeElapsed = "ontem")),
+                            desatualizado = true,
+                        ),
+                    salvoHa = "há 2 h",
+                    onAbrirGrupos = {},
+                    onLogout = {},
+                    onNovoCheckInClick = {},
+                    onTentarDeNovo = {},
+                )
+            }
+        }
+
+        rule.onNodeWithText("Você está sem conexão").assertExists()
+        rule.onNodeWithText("(atualizadas há 2 h)", substring = true).assertExists()
+    }
+
+    @Test
     fun feedVazioConvidaARegistrarALeitura() {
         var registrou = false
         mostrarFeed(EstadoDaTela.Vazio, onNovoCheckIn = { registrou = true })

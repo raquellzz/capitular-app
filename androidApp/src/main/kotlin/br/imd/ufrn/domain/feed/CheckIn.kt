@@ -26,10 +26,16 @@ data class CheckIn(
     val criadoEm: Instant,
 )
 
-/** Um trecho do feed, do mais recente para o mais antigo. [proximoCursor] é `null` na última página. */
+/**
+ * Um trecho do feed, do mais recente para o mais antigo. [proximoCursor] é `null` na última página.
+ * [desatualizada] é `true` quando, sem conexão, a página veio da cópia guardada no aparelho,
+ * e [guardadaEm] diz quando essa cópia foi recebida do servidor.
+ */
 data class PaginaDoFeed(
     val checkIns: List<CheckIn>,
     val proximoCursor: String?,
+    val desatualizada: Boolean = false,
+    val guardadaEm: Instant? = null,
 )
 
 /** Foto escolhida pelo usuário, já lida em bytes. [tipo] é o MIME: `image/jpeg`, `image/png` ou `image/webp`. */

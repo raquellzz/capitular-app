@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.time.Instant
 
 /**
  * Feed do grupo: os check-ins do backend nos quatro estados, e os números do
@@ -37,13 +38,23 @@ class FeedViewModel(
     private val _aviso = MutableStateFlow<String?>(null)
     val aviso: StateFlow<String?> = _aviso.asStateFlow()
 
+    /** Quando a cópia mostrada (sem conexão) chegou do servidor; `null` com dados frescos. */
+    private val _guardadoEm = MutableStateFlow<Instant?>(null)
+    val guardadoEm: StateFlow<Instant?> = _guardadoEm.asStateFlow()
+
     fun atualizar() {
         viewModelScope.launch {
             val anterior = _estado.value
             if (anterior !is EstadoDaTela.Sucesso) _estado.value = EstadoDaTela.Carregando
             try {
-                val checkIns = feed.feed(grupoId).checkIns
-                _estado.value = if (checkIns.isEmpty()) EstadoDaTela.Vazio else EstadoDaTela.Sucesso(checkIns)
+                val pagina = feed.feed(grupoId)
+                _estado.value =
+                    if (pagina.checkIns.isEmpty()) {
+                        EstadoDaTela.Vazio
+                    } else {
+                        EstadoDaTela.Sucesso(pagina.checkIns, desatualizado = pagina.desatualizada)
+                    }
+                _guardadoEm.value = pagina.guardadaEm.takeIf { pagina.desatualizada }
                 _aviso.value = null
             } catch (falha: FalhaNoRepositorio) {
                 if (anterior is EstadoDaTela.Sucesso) {

@@ -108,6 +108,35 @@ class FeedViewModelTest {
         }
 
     @Test
+    fun feedGuardadoSemConexaoViraSucessoDesatualizadoComAData() =
+        runTest {
+            val guardadaEm = java.time.Instant.parse("2026-11-26T09:00:00Z")
+            val viewModel =
+                run {
+                    Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+                    FeedViewModel("g1", FeedGuardado(guardadaEm), estatisticas)
+                }
+
+            viewModel.atualizar()
+            advanceUntilIdle()
+
+            assertEquals(EstadoDaTela.Sucesso(listOf(checkInDeExemplo()), desatualizado = true), viewModel.estado.value)
+            assertEquals(guardadaEm, viewModel.guardadoEm.value)
+        }
+
+    /** Repositório que responde como o cache responde sem conexão. */
+    private class FeedGuardado(
+        private val guardadaEm: java.time.Instant,
+    ) : br.imd.ufrn.domain.feed.FeedRepository {
+        override suspend fun feed(
+            grupoId: String,
+            cursor: String?,
+        ) = br.imd.ufrn.domain.feed.PaginaDoFeed(listOf(checkInDeExemplo()), null, desatualizada = true, guardadaEm = guardadaEm)
+
+        override suspend fun registrarCheckIn(novo: br.imd.ufrn.domain.feed.NovoCheckIn) = throw UnsupportedOperationException()
+    }
+
+    @Test
     fun resumoVemDasEstatisticasESomeSeElasFalham() =
         runTest {
             val viewModel = criarViewModel()

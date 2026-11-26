@@ -51,6 +51,7 @@ import br.imd.ufrn.presentation.EstadoDaTela
 import br.imd.ufrn.presentation.components.CheckInCard
 import br.imd.ufrn.presentation.feed.FeedViewModel
 import br.imd.ufrn.presentation.feed.paraCartao
+import br.imd.ufrn.presentation.feed.tempoRelativo
 import br.imd.ufrn.presentation.model.CheckIn
 import br.imd.ufrn.presentation.theme.CapitularTheme
 import java.time.Instant
@@ -76,6 +77,7 @@ fun FeedRota(
     val estado by viewModel.estado.collectAsStateWithLifecycle()
     val resumo by viewModel.resumo.collectAsStateWithLifecycle()
     val aviso by viewModel.aviso.collectAsStateWithLifecycle()
+    val guardadoEm by viewModel.guardadoEm.collectAsStateWithLifecycle()
     val agora = Instant.now()
 
     FeedScreen(
@@ -90,6 +92,7 @@ fun FeedRota(
             },
         resumo = resumo,
         aviso = aviso,
+        salvoHa = guardadoEm?.let { tempoRelativo(it, agora) },
         onAbrirGrupos = onAbrirGrupos,
         onLogout = onLogout,
         onNovoCheckInClick = onNovoCheckInClick,
@@ -111,6 +114,7 @@ fun FeedScreen(
     modifier: Modifier = Modifier,
     resumo: Estatisticas? = null,
     aviso: String? = null,
+    salvoHa: String? = null,
     onFecharAviso: () -> Unit = {},
 ) {
     Box(
@@ -126,6 +130,9 @@ fun FeedScreen(
         ) {
             item { FeedHeader(userName = userName, onLogout = onLogout) }
             item { GrupoAtivo(nome = nomeDoGrupo, onClick = onAbrirGrupos) }
+            if (estado is EstadoDaTela.Sucesso && estado.desatualizado) {
+                item { AvisoSemConexao(salvoHa = salvoHa, onTentarDeNovo = onTentarDeNovo) }
+            }
             resumo?.let { numeros -> item { ResumoDeLeitura(numeros) } }
             aviso?.let { mensagem -> item { AvisoDoFeed(mensagem, onFecharAviso) } }
             item {
@@ -388,6 +395,37 @@ private fun MensagemDoFeed(
                 textAlign = TextAlign.Center,
             )
             TextButton(onClick = onAcao) { Text(acao, fontWeight = FontWeight.Bold) }
+        }
+    }
+}
+
+/** Sem conexão: o feed mostrado é a última cópia guardada no aparelho. */
+@Composable
+private fun AvisoSemConexao(
+    salvoHa: String?,
+    onTentarDeNovo: () -> Unit,
+) {
+    Surface(
+        color = MaterialTheme.colorScheme.tertiaryContainer,
+        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+        shape = RoundedCornerShape(16.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, top = 8.dp, bottom = 8.dp, end = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Text("📡", fontSize = 20.sp, modifier = Modifier.clearAndSetSemantics {})
+            Column(Modifier.weight(1f)) {
+                Text("Você está sem conexão", fontWeight = FontWeight.Bold)
+                Text(
+                    text =
+                        "Mostrando as leituras salvas no aparelho" +
+                            (salvoHa?.let { " (atualizadas $it)" } ?: "") + ". Podem estar desatualizadas.",
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+            TextButton(onClick = onTentarDeNovo) { Text("Atualizar", fontWeight = FontWeight.Bold) }
         }
     }
 }
